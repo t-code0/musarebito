@@ -1,41 +1,158 @@
-import { Client } from "@googlemaps/google-maps-services-js";
 import { getServiceSupabase } from "./supabase";
 import { Sauna } from "@/types/sauna";
 
-const mapsClient = new Client({});
 const CACHE_HOURS = 24;
+const API_KEY = () => process.env.GOOGLE_PLACES_API_KEY!;
 
+// Places API (New) - Text Search
 export async function searchSaunas(
   query: string,
   prefecture?: string
 ): Promise<Sauna[]> {
-  const searchQuery = prefecture
-    ? `サウナ ${query} ${prefecture}`
-    : `サウナ ${query}`;
+  const textQuery = prefecture
+    ? `サウナ ${query} ${prefecture}`.trim()
+    : `サウナ ${query}`.trim();
 
-  const response = await mapsClient.textSearch({
-    params: {
-      query: searchQuery,
-      key: process.env.GOOGLE_PLACES_API_KEY!,
-      language: "ja" as unknown as undefined,
-      region: "jp",
-    },
-  });
+  const res = await fetch(
+    "https://places.googleapis.com/v1/places:searchText",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": API_KEY(),
+        "X-Goog-FieldMask":
+          "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.nationalPhoneNumber,places.websiteUri,places.regularOpeningHours,places.photos,places.reviews,places.addressComponents",
+      },
+      body: JSON.stringify({
+        textQuery,
+        languageCode: "ja",
+        regionCode: "JP",
+        maxResultCount: 20,
+      }),
+    }
+  );
 
-  const places = response.data.results || [];
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error("Places searchText error:", res.status, errText);
+    return [];
+  }
+
+  const data = await res.json();
+  const places = data.places || [];
   const saunas: Sauna[] = [];
 
   for (const place of places) {
-    if (!place.place_id) continue;
-    const sauna = await getOrCacheSauna(place.place_id);
+    if (!place.id) continue;
+    const sauna = await getOrCacheSauna(place.id, place);
     if (sauna) saunas.push(sauna);
   }
 
   return saunas;
 }
 
+// Places API (New) - Place Details
+async function fetchPlaceDetails(placeId: string) {
+  const res = await fetch(
+    `https://places.googleapis.com/v1/places/${placeId}`,
+    {
+      headers: {
+        "X-Goog-Api-Key": API_KEY(),
+        "X-Goog-FieldMask":
+          "id,displayName,formattedAddress,location,rating,nationalPhoneNumber,websiteUri,regularOpeningHours,photos,reviews,addressComponents",
+      },
+    }
+  );
+
+  if (!res.ok) {
+    console.error("Places detail error:", res.status, await res.text());
+    return null;
+  }
+
+  return res.json();
+}
+
+function extractPrefecture(
+  addressComponents: Array<{
+    longText: string;
+    types: string[];
+  }> | undefined
+): string {
+  if (!addressComponents) return "";
+  const comp = addressComponents.find((c: { types: string[] }) =>
+    c.types.includes("administrative_area_level_1")
+  );
+  return comp?.longText || "";
+}
+
+function extractCity(
+  addressComponents: Array<{
+    longText: string;
+    types: string[];
+  }> | undefined
+): string {
+  if (!addressComponents) return "";
+  const comp = addressComponents.find((c: { types: string[] }) =>
+    c.types.includes("locality")
+  );
+  return comp?.longText || "";
+}
+
+function buildPhotoUrl(photoName: string): string {
+  return `https://places.googleapis.com/v1/${photoName}/media?maxWidthPx=800&key=${API_KEY()}`;
+}
+
+function placeToSaunaData(placeId: string, detail: Record<string, unknown>) {
+  const photos = detail.photos as Array<{ name: string }> | undefined;
+  const reviews = detail.reviews as Array<{
+    authorAttribution?: { displayName?: string };
+    rating?: number;
+    text?: { text?: string };
+    publishTime?: string;
+  }> | undefined;
+  const location = detail.location as { latitude: number; longitude: number } | undefined;
+  const displayName = detail.displayName as { text?: string } | undefined;
+  const openingHours = detail.regularOpeningHours as { weekdayDescriptions?: string[] } | undefined;
+  const addressComponents = detail.addressComponents as Array<{
+    longText: string;
+    types: string[];
+  }> | undefined;
+
+  return {
+    place_id: placeId,
+    name: displayName?.text || "",
+    prefecture: extractPrefecture(addressComponents),
+    city: extractCity(addressComponents),
+    address: (detail.formattedAddress as string) || "",
+    lat: location?.latitude || 0,
+    lng: location?.longitude || 0,
+    rating: (detail.rating as number) || null,
+    phone: (detail.nationalPhoneNumber as string) || null,
+    website: (detail.websiteUri as string) || null,
+    opening_hours: openingHours?.weekdayDescriptions
+      ? openingHours.weekdayDescriptions.map((text: string) => ({ text }))
+      : null,
+    photos: photos
+      ? photos.slice(0, 5).map((p) => buildPhotoUrl(p.name))
+      : null,
+    google_reviews: reviews
+      ? reviews.map((r) => ({
+          author_name: r.authorAttribution?.displayName || "",
+          rating: r.rating || 0,
+          text: r.text?.text || "",
+          time: r.publishTime
+            ? Math.floor(new Date(r.publishTime).getTime() / 1000)
+            : 0,
+        }))
+      : null,
+    cached_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export async function getOrCacheSauna(
-  placeId: string
+  placeId: string,
+  searchResult?: Record<string, unknown>
 ): Promise<Sauna | null> {
   const supabase = getServiceSupabase();
 
@@ -56,72 +173,11 @@ export async function getOrCacheSauna(
     }
   }
 
-  // Fetch from Google Places
-  const detailResponse = await mapsClient.placeDetails({
-    params: {
-      place_id: placeId,
-      key: process.env.GOOGLE_PLACES_API_KEY!,
-      language: "ja" as unknown as undefined,
-      fields: [
-        "place_id",
-        "name",
-        "formatted_address",
-        "geometry",
-        "rating",
-        "formatted_phone_number",
-        "website",
-        "opening_hours",
-        "photos",
-        "reviews",
-        "address_components",
-      ],
-    },
-  });
-
-  const detail = detailResponse.data.result;
+  // Use search result data or fetch details
+  const detail = searchResult || (await fetchPlaceDetails(placeId));
   if (!detail) return null;
 
-  const addressComponents = detail.address_components || [];
-  const prefectureComponent = addressComponents.find((c) =>
-    c.types.includes("administrative_area_level_1" as never)
-  );
-  const cityComponent = addressComponents.find((c) =>
-    c.types.includes("locality" as never)
-  );
-
-  const saunaData = {
-    place_id: placeId,
-    name: detail.name || "",
-    prefecture: prefectureComponent?.long_name || "",
-    city: cityComponent?.long_name || "",
-    address: detail.formatted_address || "",
-    lat: detail.geometry?.location?.lat || 0,
-    lng: detail.geometry?.location?.lng || 0,
-    rating: detail.rating || null,
-    phone: detail.formatted_phone_number || null,
-    website: detail.website || null,
-    opening_hours: detail.opening_hours?.weekday_text
-      ? detail.opening_hours.weekday_text.map((text: string) => ({
-          text,
-        }))
-      : null,
-    photos: detail.photos
-      ? detail.photos.slice(0, 5).map(
-          (p) =>
-            `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photoreference=${p.photo_reference}&key=${process.env.GOOGLE_PLACES_API_KEY}`
-        )
-      : null,
-    google_reviews: detail.reviews
-      ? detail.reviews.map((r) => ({
-          author_name: r.author_name,
-          rating: r.rating,
-          text: r.text,
-          time: r.time,
-        }))
-      : null,
-    cached_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
+  const saunaData = placeToSaunaData(placeId, detail);
 
   if (cached) {
     const { data, error } = await supabase
@@ -158,6 +214,5 @@ export async function getSaunasByPrefecture(
     return data as Sauna[];
   }
 
-  // If no cached data, search Google
   return searchSaunas("", prefecture);
 }
