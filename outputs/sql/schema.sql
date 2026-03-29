@@ -1,5 +1,5 @@
 -- saunas table
-CREATE TABLE saunas (
+CREATE TABLE IF NOT EXISTS saunas (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   place_id TEXT UNIQUE NOT NULL,
   name TEXT NOT NULL,
@@ -22,8 +22,8 @@ CREATE TABLE saunas (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- reviews table
-CREATE TABLE reviews (
+-- sauna_reviews table (renamed to avoid conflict with existing reviews table)
+CREATE TABLE IF NOT EXISTS sauna_reviews (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   sauna_id UUID NOT NULL REFERENCES saunas(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL,
@@ -34,13 +34,13 @@ CREATE TABLE reviews (
 );
 
 -- indexes
-CREATE INDEX idx_saunas_prefecture ON saunas(prefecture);
-CREATE INDEX idx_saunas_place_id ON saunas(place_id);
-CREATE INDEX idx_reviews_sauna_id ON reviews(sauna_id);
+CREATE INDEX IF NOT EXISTS idx_saunas_prefecture ON saunas(prefecture);
+CREATE INDEX IF NOT EXISTS idx_saunas_place_id ON saunas(place_id);
+CREATE INDEX IF NOT EXISTS idx_sauna_reviews_sauna_id ON sauna_reviews(sauna_id);
 
 -- RLS
 ALTER TABLE saunas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sauna_reviews ENABLE ROW LEVEL SECURITY;
 
 -- saunas: everyone can SELECT, only service_role can INSERT/UPDATE
 CREATE POLICY "saunas_select" ON saunas FOR SELECT USING (true);
@@ -51,6 +51,6 @@ CREATE POLICY "saunas_update" ON saunas FOR UPDATE USING (
   (current_setting('role') = 'service_role')
 );
 
--- reviews: everyone can SELECT and INSERT
-CREATE POLICY "reviews_select" ON reviews FOR SELECT USING (true);
-CREATE POLICY "reviews_insert" ON reviews FOR INSERT WITH CHECK (true);
+-- sauna_reviews: everyone can SELECT and INSERT
+CREATE POLICY "sauna_reviews_select" ON sauna_reviews FOR SELECT USING (true);
+CREATE POLICY "sauna_reviews_insert" ON sauna_reviews FOR INSERT WITH CHECK (true);

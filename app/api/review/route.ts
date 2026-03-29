@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { data, error } = await getSupabase()
-      .from("reviews")
+      .from("sauna_reviews")
       .insert({
         sauna_id,
         user_id,

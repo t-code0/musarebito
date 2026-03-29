@@ -57,7 +57,7 @@ export async function GET(
 
     // Fetch reviews
     const { data: reviews } = await supabase
-      .from("reviews")
+      .from("sauna_reviews")
       .select("*")
       .eq("sauna_id", params.id)
       .order("created_at", { ascending: false });
