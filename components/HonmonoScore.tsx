@@ -24,40 +24,40 @@ export default function HonmonoScore({ score, detail }: Props) {
     );
   }
 
-  const scoreColor =
-    score >= 80
-      ? "text-emerald-600"
-      : score >= 60
-        ? "text-amber-600"
-        : "text-red-600";
-
   return (
-    <div className="bg-white border-2 border-[#1B4332] rounded-xl p-6">
-      <div className="text-center mb-4">
-        <p className="text-sm text-gray-500 mb-1">本物スコア</p>
-        <p className={`text-5xl font-bold ${scoreColor}`}>{score}</p>
-        <p className="text-sm text-gray-400 mt-1">/ 100</p>
+    <div className="bg-[#1B4332] rounded-xl p-6">
+      <div className="text-center mb-5">
+        <p className="text-sm text-white/70 mb-1">本物スコア</p>
+        <p className="text-5xl font-bold text-white">{score}</p>
+        <p className="text-sm text-white/50 mt-1">/ 100</p>
       </div>
 
       <div className="space-y-3">
-        {categories.map(({ key, label }) => (
-          <div key={key}>
-            <div className="flex justify-between text-sm mb-1">
-              <span className="text-gray-700">{label}</span>
-              <span className="font-medium">{detail[key]} / 20</span>
+        {categories.map(({ key, label }) => {
+          const value = Math.min((detail[key] as number) ?? 0, 20);
+          return (
+            <div key={key}>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-white/80">{label}</span>
+                <span className="text-white font-medium">{value} / 20</span>
+              </div>
+              <div className="w-full bg-white/15 rounded-full h-3 overflow-hidden">
+                <div
+                  className="h-3 rounded-full transition-all"
+                  style={{
+                    width: `${(value / 20) * 100}%`,
+                    background: "linear-gradient(90deg, #dc2626, #ef4444, #ff6b6b)",
+                    boxShadow: "0 0 8px rgba(239,68,68,0.6)",
+                  }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-[#1B4332] h-2 rounded-full transition-all"
-                style={{ width: `${(detail[key] / 20) * 100}%` }}
-              />
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {detail.explanation && (
-        <p className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+        <p className="mt-4 text-sm text-white/70 bg-white/10 rounded-lg p-3">
           {detail.explanation}
         </p>
       )}

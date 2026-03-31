@@ -1,3 +1,9 @@
+export interface FoodInfo {
+  restaurant: string;
+  local_food: string[];
+  nearby_spots: string[];
+}
+
 export interface Sauna {
   id: string;
   place_id: string;
@@ -16,6 +22,8 @@ export interface Sauna {
   ai_summary: string | null;
   honmono_score: number | null;
   score_detail: ScoreDetail | null;
+  food_info: FoodInfo | null;
+  is_closed: boolean;
   cached_at: string;
   created_at: string;
   updated_at: string;
@@ -35,6 +43,7 @@ export interface ScoreDetail {
   cleanliness: number;
   authenticity: number;
   explanation: string;
+  [key: string]: number | string;
 }
 
 export interface Review {

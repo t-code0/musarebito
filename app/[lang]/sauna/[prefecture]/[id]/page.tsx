@@ -83,15 +83,83 @@ export default function SaunaDetailPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column */}
           <div className="lg:col-span-2 space-y-8">
+            {/* Photo Gallery */}
+            {sauna.photos && sauna.photos.length > 0 && (
+              <section className="bg-white rounded-xl shadow-sm p-6">
+                <h2 className="text-xl font-bold text-[#1B4332] mb-4">写真</h2>
+                <div className="grid grid-cols-3 gap-2">
+                  {sauna.photos.slice(0, 6).map((photo, i) => {
+                    const photoUrl = photo.startsWith("http")
+                      ? photo
+                      : `https://places.googleapis.com/v1/${photo}/media?maxHeightPx=400&maxWidthPx=400&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
+                    return (
+                      <a key={i} href={photoUrl} target="_blank" rel="noopener noreferrer">
+                        <img
+                          src={photoUrl}
+                          alt={`${sauna.name} 写真${i + 1}`}
+                          className="w-full h-28 md:h-36 object-cover rounded-lg hover:opacity-80 transition"
+                        />
+                      </a>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
             {/* AI Summary */}
             <section className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-[#1B4332] mb-3 flex items-center gap-2">
-                AI要約
+                この施設の特徴
               </h2>
               <p className="text-gray-700 leading-relaxed">
                 {sauna.ai_summary || "要約を生成中..."}
               </p>
             </section>
+
+            {/* Food Info */}
+            {(() => {
+              const fi = sauna.food_info;
+              if (!fi) return null;
+              const hasRestaurant = fi.restaurant && fi.restaurant !== "不明" && fi.restaurant.trim() !== "";
+              const validFoods = (fi.local_food || []).filter((f: string) => f !== "不明" && f.trim() !== "");
+              const validSpots = (fi.nearby_spots || []).filter((s: string) => s !== "不明" && s.trim() !== "");
+              if (!hasRestaurant && validFoods.length === 0 && validSpots.length === 0) return null;
+              return (
+                <section className="bg-white rounded-xl shadow-sm p-6">
+                  <h2 className="text-xl font-bold text-[#1B4332] mb-4">
+                    🍜 グルメ＆周辺情報
+                  </h2>
+                  <div className="space-y-4">
+                    {hasRestaurant && (
+                      <div>
+                        <h3 className="font-bold text-sm text-gray-500 mb-1">施設内の名物メニュー</h3>
+                        <p className="text-gray-700">{fi.restaurant}</p>
+                      </div>
+                    )}
+                    {validFoods.length > 0 && (
+                      <div>
+                        <h3 className="font-bold text-sm text-gray-500 mb-1">周辺ご当地グルメ</h3>
+                        <ul className="list-disc list-inside text-gray-700 space-y-1">
+                          {validFoods.map((food: string, i: number) => (
+                            <li key={i}>{food}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {validSpots.length > 0 && (
+                      <div>
+                        <h3 className="font-bold text-sm text-gray-500 mb-1">近くの観光スポット</h3>
+                        <ul className="list-disc list-inside text-gray-700 space-y-1">
+                          {validSpots.map((spot: string, i: number) => (
+                            <li key={i}>{spot}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              );
+            })()}
 
             {/* Info */}
             <section className="bg-white rounded-xl shadow-sm p-6">
@@ -120,6 +188,30 @@ export default function SaunaDetailPage() {
                     </dd>
                   </div>
                 )}
+                <div className="flex">
+                  <dt className="w-24 text-gray-500 text-sm">Instagram</dt>
+                  <dd>
+                    {sauna.website && sauna.website.includes("instagram.com") ? (
+                      <a
+                        href={sauna.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-sm"
+                      >
+                        公式Instagram
+                      </a>
+                    ) : (
+                      <a
+                        href={`https://www.instagram.com/explore/search/keyword/?q=${encodeURIComponent(sauna.name)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline text-sm"
+                      >
+                        @{sauna.name}を検索
+                      </a>
+                    )}
+                  </dd>
+                </div>
                 {sauna.rating && (
                   <div className="flex">
                     <dt className="w-24 text-gray-500 text-sm">Google評価</dt>

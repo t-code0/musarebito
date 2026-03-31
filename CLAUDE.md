@@ -1,18 +1,30 @@
-# 蒸され人（むされびと） CEO
-
-## プロジェクト概要
-- サービス名: 蒸され人（むされびと）
-- フォルダ名: musarebito
-- Vercelドメイン: honmono-sauna
-- Next.js 14 + TypeScript + Tailwind + Supabase + Google Maps API + Claude API
-- URL構造: /[lang]/sauna/[prefecture]/[id]
-- Google Places APIは必ずSupabaseで24時間キャッシュ
-
-## デザイン
-- メインカラー: 深緑 #1B4332
-- アクセントカラー: アンバー #D97706
-- モバイルファースト
-
-## 環境変数
-ANTHROPIC_API_KEY, NEXT_PUBLIC_GOOGLE_MAPS_API_KEY, GOOGLE_PLACES_API_KEY,
-NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
+﻿## 作業開始前の必須手順（新規タスク開始時のみ）
+1. プロジェクトファイルの quality_gates_v6.md を読む
+2. プロジェクトファイルの CLAUDE_CEO_v6.md を読む
+## 成果物提出前の必須手順（タスク完了時に必ず実行）
+1. quality_gates_v6.md の合格条件を全項目チェック
+2. ブラウザで動作確認
+3. 全項目合格するまで自分で修正してから報告
+4. 合格していない場合は自分で差し戻して修正すること
+---
+# 蒸され人（むされびと） 指示書
+## あなたの役割
+あなたはシニアフルスタックエンジニアです。
+蒸され人をサウナ好きが毎日使うレベルで実装してください。
+## 合格基準
+- AI要約でこの施設の特徴を30秒で把握できる
+- 本物スコアに清潔さ・設備・スタッフ・ととのい度の内訳が見える
+- サウナイキタイにない情報（健康効果論文・混雑傾向）がある
+- シェアしたくなるスコア画像がある
+## 技術スタック
+- Next.js 14 + TypeScript + Tailwind CSS
+- Supabase（DB）
+- Vercel（デプロイ）
+- Google Maps JavaScript API + Places API
+- Claude API
+## URL構造
+/[lang]/sauna/[prefecture]/[id]
+## 禁止事項
+- Inter/Roboto/Arialフォントの使用
+- Googleマップと同じ情報しかない状態でのリリース
+- 合格基準を満たさない状態での報告

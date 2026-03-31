@@ -17,9 +17,10 @@ export async function GET(request: NextRequest) {
     const saunas = await searchSaunas(query, prefecture);
     return NextResponse.json({ saunas });
   } catch (error) {
-    console.error("Search error:", error);
+    const msg = error instanceof Error ? error.message : String(error);
+    console.error("Search error:", msg, error);
     return NextResponse.json(
-      { error: "検索中にエラーが発生しました" },
+      { error: "検索中にエラーが発生しました", detail: msg },
       { status: 500 }
     );
   }
