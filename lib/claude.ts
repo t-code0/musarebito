@@ -1,12 +1,4 @@
-export interface ScoreDetail {
-  water_bath: number;
-  heat_quality: number;
-  outside_air: number;
-  cleanliness: number;
-  authenticity: number;
-  overall: number;
-  explanation: string;
-}
+import { ScoreDetail } from "@/types/sauna";
 
 export interface FoodInfo {
   restaurant: string;
@@ -57,7 +49,7 @@ function getBaseUrl(url: string): string {
 
 async function fetchWebsiteContent(url: string): Promise<string> {
   const baseUrl = getBaseUrl(url);
-  const subPages = ["/spa/", "/restaurant/"];
+  const subPages = ["/sauna/", "/spa/", "/restaurant/"];
   const urls = [baseUrl, ...subPages.map((p) => `${baseUrl}${p}`)];
 
   const results = await Promise.allSettled(
@@ -87,7 +79,7 @@ export async function generateSummary(
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-haiku-4-5-20251001",
       max_tokens: 400,
       messages: [
         {
@@ -177,12 +169,12 @@ export async function calculateHonmonoScore(
 ${reviews.join("\n---\n")}
 
 採点基準：
-- water_bath: 水風呂の温度・深さ・質（0-20）
-- heat_quality: サウナ室の熱さ・ロウリュ品質（0-20）
-- outside_air: 外気浴スペースの充実度（0-20）
-- cleanliness: 清潔感・設備の状態（0-20）
-- authenticity: スタッフ対応・本物感・独自性（0-20）
-- overall: 上記5項目の合計をもとに0-100で算出
+- water_bath: 水風呂（温度・水質・深さ・広さ）（0-20）
+- heat_quality: 熱の質（サウナ室の温度・湿度・ロウリュ・オートロウリュの有無と質）（0-20）
+- outside_air: 外気浴（ととのいスペースの充実度・椅子の数と種類・眺望・風通し）（0-20）
+- cleanliness: 清潔さ（館内・浴室・脱衣所の清潔感、メンテナンス状態）（0-20）
+- authenticity: 本物度（施設独自のこだわり・他にない特徴・サウナ文化への敬意）（0-20）
+- overall: 上記5項目の合計（0-100）
 - explanation: スコアの根拠を50字以内で
 
 以下のJSON形式のみで返してください。JSON以外の文字は一切含めないでください：
@@ -197,13 +189,18 @@ ${reviews.join("\n---\n")}
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("No JSON found");
     const parsed = JSON.parse(jsonMatch[0]);
+    const wb = Math.min(Math.max(parsed.water_bath || 0, 0), 20);
+    const hq = Math.min(Math.max(parsed.heat_quality || 0, 0), 20);
+    const oa = Math.min(Math.max(parsed.outside_air || 0, 0), 20);
+    const cl = Math.min(Math.max(parsed.cleanliness || 0, 0), 20);
+    const au = Math.min(Math.max(parsed.authenticity || 0, 0), 20);
     return {
-      water_bath: Math.min(Math.max(parsed.water_bath || 0, 0), 20),
-      heat_quality: Math.min(Math.max(parsed.heat_quality || 0, 0), 20),
-      outside_air: Math.min(Math.max(parsed.outside_air || 0, 0), 20),
-      cleanliness: Math.min(Math.max(parsed.cleanliness || 0, 0), 20),
-      authenticity: Math.min(Math.max(parsed.authenticity || 0, 0), 20),
-      overall: Math.min(Math.max(parsed.overall || 0, 0), 100),
+      water_bath: wb,
+      heat_quality: hq,
+      outside_air: oa,
+      cleanliness: cl,
+      authenticity: au,
+      overall: wb + hq + oa + cl + au,
       explanation: parsed.explanation || "",
     };
   } catch {

@@ -47,7 +47,7 @@ export default function HonmonoScore({ score, detail }: Props) {
                   style={{
                     width: `${(value / 20) * 100}%`,
                     background: "linear-gradient(90deg, #dc2626, #ef4444, #ff6b6b)",
-                    boxShadow: "0 0 8px rgba(239,68,68,0.6)",
+                    boxShadow: "inset 0 1px 1px rgba(255,255,255,0.3), 0 0 8px rgba(239,68,68,0.6)",
                   }}
                 />
               </div>

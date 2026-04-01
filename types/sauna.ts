@@ -42,6 +42,7 @@ export interface ScoreDetail {
   outside_air: number;
   cleanliness: number;
   authenticity: number;
+  overall: number;
   explanation: string;
   [key: string]: number | string;
 }
