@@ -5,6 +5,7 @@ import { ScoreDetail } from "@/types/sauna";
 interface Props {
   score: number | null;
   detail: ScoreDetail | null;
+  hasReviews?: boolean;
 }
 
 const categories = [
@@ -15,11 +16,14 @@ const categories = [
   { key: "authenticity" as const, label: "本物感" },
 ];
 
-export default function HonmonoScore({ score, detail }: Props) {
+export default function HonmonoScore({ score, detail, hasReviews = true }: Props) {
   if (!score || !detail) {
     return (
       <div className="bg-gray-100 rounded-xl p-6 text-center text-gray-500">
-        スコア未算出
+        <p className="font-medium">スコア未算出</p>
+        {!hasReviews && (
+          <p className="text-sm mt-2">Google口コミが集まり次第、自動算出されます。</p>
+        )}
       </div>
     );
   }

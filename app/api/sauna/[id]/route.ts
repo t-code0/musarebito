@@ -20,7 +20,8 @@ export async function GET(
 
   try {
     const cacheExpired = isCacheExpired(sauna.cached_at);
-    const missingPhotos = !sauna.photos || sauna.photos.length === 0;
+    // null = never fetched, [] = fetched but no photos available
+    const missingPhotos = sauna.photos === null;
 
     // Refresh from Places API if cache expired, missing photos, or missing details
     if ((cacheExpired || missingPhotos || (!sauna.phone && !sauna.website)) && sauna.place_id) {
@@ -33,10 +34,15 @@ export async function GET(
         if (detail.website) updates.website = detail.website;
         if (detail.opening_hours) updates.opening_hours = detail.opening_hours;
         if (detail.reviews) updates.google_reviews = detail.reviews;
-        if (detail.photos) updates.photos = detail.photos.slice(0, 10).map((p) => {
-          const ref = p.photo_reference;
-          return ref.startsWith("http") ? ref : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
-        });
+        if (detail.photos && detail.photos.length > 0) {
+          updates.photos = detail.photos.slice(0, 10).map((p) => {
+            const ref = p.photo_reference;
+            return ref.startsWith("http") ? ref : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+          });
+        } else if (missingPhotos) {
+          // Mark as "checked, no photos available" to prevent repeated API calls
+          updates.photos = [];
+        }
         if (detail.business_status === "CLOSED_PERMANENTLY") {
           updates.is_closed = true;
         }
@@ -57,24 +63,30 @@ export async function GET(
     const needsScore = sauna.honmono_score == null;
     const needsFood = !sauna.food_info;
 
-    if ((needsSummary || needsScore || needsFood) && sauna.google_reviews?.length > 0) {
-      const reviewTexts = sauna.google_reviews.map((r: { text: string }) => r.text).filter(Boolean);
-      if (reviewTexts.length > 0) {
-        const promises = [
-          needsSummary ? generateSummary(reviewTexts, sauna.name, sauna.website) : Promise.resolve(null),
-          needsFood ? generateFoodInfo(reviewTexts, sauna.name, sauna.address || "", sauna.website) : Promise.resolve(null),
-          needsScore ? calculateHonmonoScore(reviewTexts, sauna.name) : Promise.resolve(null),
-        ] as const;
-        const [summary, foodInfo, score] = await Promise.all(promises);
+    if (needsSummary || needsScore || needsFood) {
+      const hasReviews = sauna.google_reviews?.length > 0;
+      const reviewTexts = hasReviews
+        ? sauna.google_reviews.map((r: { text: string }) => r.text).filter(Boolean)
+        : [];
+      // Summary and food can be generated from website even without reviews
+      const canGenerateFromWeb = reviewTexts.length > 0 || !!sauna.website;
+      const textsForAI = reviewTexts.length > 0 ? reviewTexts : ["口コミなし"];
 
-        const aiUpdates: Record<string, unknown> = {};
-        if (summary) { aiUpdates.ai_summary = summary; sauna.ai_summary = summary; }
-        if (score) { aiUpdates.honmono_score = score.overall; aiUpdates.score_detail = score; sauna.honmono_score = score.overall; sauna.score_detail = score; }
-        if (foodInfo) { aiUpdates.food_info = foodInfo; sauna.food_info = foodInfo; }
+      const promises = [
+        needsSummary && canGenerateFromWeb ? generateSummary(textsForAI, sauna.name, sauna.website) : Promise.resolve(null),
+        needsFood && canGenerateFromWeb ? generateFoodInfo(textsForAI, sauna.name, sauna.address || "", sauna.website) : Promise.resolve(null),
+        // Score requires actual reviews — can't score without them
+        needsScore && reviewTexts.length > 0 ? calculateHonmonoScore(reviewTexts, sauna.name) : Promise.resolve(null),
+      ] as const;
+      const [summary, foodInfo, score] = await Promise.all(promises);
 
-        if (Object.keys(aiUpdates).length > 0) {
-          await sb.from("saunas").update(aiUpdates).eq("id", sauna.id);
-        }
+      const aiUpdates: Record<string, unknown> = {};
+      if (summary) { aiUpdates.ai_summary = summary; sauna.ai_summary = summary; }
+      if (score) { aiUpdates.honmono_score = score.overall; aiUpdates.score_detail = score; sauna.honmono_score = score.overall; sauna.score_detail = score; }
+      if (foodInfo) { aiUpdates.food_info = foodInfo; sauna.food_info = foodInfo; }
+
+      if (Object.keys(aiUpdates).length > 0) {
+        await sb.from("saunas").update(aiUpdates).eq("id", sauna.id);
       }
     }
 

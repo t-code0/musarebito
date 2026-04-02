@@ -107,7 +107,10 @@ export default function SaunaDetailPage() {
                 この施設の特徴
               </h2>
               <p className="text-gray-700 leading-relaxed">
-                {sauna.ai_summary || "要約を生成中..."}
+                {sauna.ai_summary ||
+                  (sauna.google_reviews && sauna.google_reviews.length > 0
+                    ? "要約を生成中..."
+                    : "口コミが集まり次第、AI要約が自動生成されます。")}
               </p>
             </section>
 
@@ -273,6 +276,7 @@ export default function SaunaDetailPage() {
             <HonmonoScore
               score={sauna.honmono_score}
               detail={sauna.score_detail}
+              hasReviews={!!sauna.google_reviews && sauna.google_reviews.length > 0}
             />
           </div>
         </div>
