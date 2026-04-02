@@ -19,18 +19,15 @@ export async function searchPlaces(query: string, prefecture?: string) {
   const sb = getServiceClient();
   const searchQuery = prefecture ? `${query} ${prefecture} サウナ` : `${query} サウナ`;
 
-  const cached = await sb
+  // Always return DB data first if available
+  const { data: cached } = await sb
     .from("saunas")
     .select("*")
-    .ilike("name", `%${query}%`)
-    .not("cached_at", "is", null);
+    .ilike("name", `%${query}%`);
 
-  // Return cached if found and not expired
-  if (cached.data && cached.data.length > 0) {
-    const validCache = cached.data.filter((s) => !isCacheExpired(s.cached_at));
-    if (validCache.length > 0) return validCache;
-  }
+  if (cached && cached.length > 0) return cached;
 
+  // No data in DB — fetch from Places API
   const res = await client.textSearch({
     params: {
       query: searchQuery,
@@ -64,26 +61,6 @@ export async function searchPlaces(query: string, prefecture?: string) {
     .from("saunas")
     .select("*")
     .ilike("name", `%${query}%`);
-
-  // Backfill photos for up to 5 facilities missing them
-  if (data) {
-    const noPhotos = data.filter((s) => (!s.photos || s.photos.length === 0) && s.place_id);
-    const toFetch = noPhotos.slice(0, 5);
-    await Promise.all(
-      toFetch.map(async (s) => {
-        try {
-          const detail = await getPlaceDetail(s.place_id);
-          if (detail?.photos && detail.photos.length > 0) {
-            const photoRefs = detail.photos.slice(0, 10).map((p) => photoRefToUrl(p.photo_reference));
-            await sb.from("saunas").update({ photos: photoRefs }).eq("id", s.id);
-            s.photos = photoRefs;
-          }
-        } catch (e) {
-          console.error(`Photo backfill failed for ${s.name}:`, e);
-        }
-      })
-    );
-  }
 
   return data || [];
 }
