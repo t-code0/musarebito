@@ -20,9 +20,10 @@ export async function GET(
 
   try {
     const cacheExpired = isCacheExpired(sauna.cached_at);
+    const missingPhotos = !sauna.photos || sauna.photos.length === 0;
 
-    // Refresh from Places API if cache expired or missing details
-    if ((cacheExpired || (!sauna.phone && !sauna.website)) && sauna.place_id) {
+    // Refresh from Places API if cache expired, missing photos, or missing details
+    if ((cacheExpired || missingPhotos || (!sauna.phone && !sauna.website)) && sauna.place_id) {
       const detail = await getPlaceDetail(sauna.place_id);
       if (detail) {
         const updates: Record<string, unknown> = {
