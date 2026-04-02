@@ -17,6 +17,8 @@ CREATE TABLE IF NOT EXISTS saunas (
   ai_summary TEXT,
   honmono_score INTEGER,
   score_detail JSONB,
+  food_info JSONB,
+  is_closed BOOLEAN DEFAULT FALSE,
   cached_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -41,6 +43,10 @@ CREATE INDEX IF NOT EXISTS idx_sauna_reviews_sauna_id ON sauna_reviews(sauna_id)
 -- RLS
 ALTER TABLE saunas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sauna_reviews ENABLE ROW LEVEL SECURITY;
+
+-- Add columns if migrating from older schema
+ALTER TABLE saunas ADD COLUMN IF NOT EXISTS food_info JSONB;
+ALTER TABLE saunas ADD COLUMN IF NOT EXISTS is_closed BOOLEAN DEFAULT FALSE;
 
 -- saunas: everyone can SELECT, only service_role can INSERT/UPDATE
 CREATE POLICY "saunas_select" ON saunas FOR SELECT USING (true);
