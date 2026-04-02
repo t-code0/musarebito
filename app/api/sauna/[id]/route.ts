@@ -48,43 +48,34 @@ export async function GET(
       }
     }
 
-    // Generate AI summary and food info if missing
-    if (!sauna.ai_summary && sauna.google_reviews?.length > 0) {
-      const reviewTexts = sauna.google_reviews.map((r: { text: string }) => r.text).filter(Boolean);
-      if (reviewTexts.length > 0) {
-        const [summary, foodInfo, score] = await Promise.all([
-          generateSummary(reviewTexts, sauna.name, sauna.website),
-          generateFoodInfo(reviewTexts, sauna.name, sauna.address || "", sauna.website),
-          calculateHonmonoScore(reviewTexts, sauna.name),
-        ]);
-        const aiUpdates: Record<string, unknown> = {
-          ai_summary: summary,
-          honmono_score: score.overall,
-          score_detail: score,
-        };
-        if (foodInfo) aiUpdates.food_info = foodInfo;
-        await sb.from("saunas").update(aiUpdates).eq("id", sauna.id);
-        sauna.ai_summary = summary;
-        sauna.honmono_score = score.overall;
-        sauna.score_detail = score;
-        if (foodInfo) sauna.food_info = foodInfo;
-      }
-    }
+    // Generate AI fields if any are missing
+    const needsSummary = !sauna.ai_summary;
+    const needsScore = sauna.honmono_score == null;
+    const needsFood = !sauna.food_info;
 
-    // Generate food info separately if summary exists but food info doesn't
-    if (!sauna.food_info && sauna.google_reviews?.length > 0) {
+    if ((needsSummary || needsScore || needsFood) && sauna.google_reviews?.length > 0) {
       const reviewTexts = sauna.google_reviews.map((r: { text: string }) => r.text).filter(Boolean);
       if (reviewTexts.length > 0) {
-        const foodInfo = await generateFoodInfo(reviewTexts, sauna.name, sauna.address || "", sauna.website);
-        if (foodInfo) {
-          await sb.from("saunas").update({ food_info: foodInfo }).eq("id", sauna.id);
-          sauna.food_info = foodInfo;
+        const promises = [
+          needsSummary ? generateSummary(reviewTexts, sauna.name, sauna.website) : Promise.resolve(null),
+          needsFood ? generateFoodInfo(reviewTexts, sauna.name, sauna.address || "", sauna.website) : Promise.resolve(null),
+          needsScore ? calculateHonmonoScore(reviewTexts, sauna.name) : Promise.resolve(null),
+        ] as const;
+        const [summary, foodInfo, score] = await Promise.all(promises);
+
+        const aiUpdates: Record<string, unknown> = {};
+        if (summary) { aiUpdates.ai_summary = summary; sauna.ai_summary = summary; }
+        if (score) { aiUpdates.honmono_score = score.overall; aiUpdates.score_detail = score; sauna.honmono_score = score.overall; sauna.score_detail = score; }
+        if (foodInfo) { aiUpdates.food_info = foodInfo; sauna.food_info = foodInfo; }
+
+        if (Object.keys(aiUpdates).length > 0) {
+          await sb.from("saunas").update(aiUpdates).eq("id", sauna.id);
         }
       }
     }
 
     const { data: reviews } = await sb
-      .from("reviews")
+      .from("sauna_reviews")
       .select("*")
       .eq("sauna_id", sauna.id)
       .order("created_at", { ascending: false });

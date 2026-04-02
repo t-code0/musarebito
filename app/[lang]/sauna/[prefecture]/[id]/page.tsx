@@ -88,7 +88,7 @@ export default function SaunaDetailPage() {
               <section className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-[#1B4332] mb-4">写真</h2>
                 <div className="grid grid-cols-3 gap-2">
-                  {sauna.photos.slice(0, 6).map((photo, i) => {
+                  {[0, 2, 4, 6, 8, 1].map((idx) => sauna.photos![idx]).filter(Boolean).slice(0, 6).map((photo, i) => {
                     const photoUrl = photo.startsWith("http")
                       ? photo
                       : `https://places.googleapis.com/v1/${photo}/media?maxHeightPx=400&maxWidthPx=400&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
