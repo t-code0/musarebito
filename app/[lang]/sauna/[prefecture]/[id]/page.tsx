@@ -88,20 +88,15 @@ export default function SaunaDetailPage() {
               <section className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-[#1B4332] mb-4">写真</h2>
                 <div className="grid grid-cols-3 gap-2">
-                  {[0, 2, 4, 6, 8, 1].map((idx) => sauna.photos![idx]).filter(Boolean).slice(0, 6).map((photo, i) => {
-                    const photoUrl = photo.startsWith("http")
-                      ? photo
-                      : `https://places.googleapis.com/v1/${photo}/media?maxHeightPx=400&maxWidthPx=400&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`;
-                    return (
-                      <a key={i} href={photoUrl} target="_blank" rel="noopener noreferrer">
+                  {[0, 2, 4, 6, 8, 1].map((idx) => sauna.photos![idx]).filter(Boolean).slice(0, 6).map((photo, i) => (
+                      <a key={i} href={photo} target="_blank" rel="noopener noreferrer">
                         <img
-                          src={photoUrl}
+                          src={photo}
                           alt={`${sauna.name} 写真${i + 1}`}
                           className="w-full h-28 md:h-36 object-cover rounded-lg hover:opacity-80 transition"
                         />
                       </a>
-                    );
-                  })}
+                  ))}
                 </div>
               </section>
             )}

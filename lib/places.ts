@@ -4,6 +4,11 @@ import { getServiceSupabase as getServiceClient } from "./supabase";
 const client = new Client({});
 const CACHE_DAYS = 180;
 
+function photoRefToUrl(ref: string): string {
+  if (ref.startsWith("http")) return ref;
+  return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+}
+
 function isCacheExpired(cachedAt: string | null): boolean {
   if (!cachedAt) return true;
   const diff = Date.now() - new Date(cachedAt).getTime();
@@ -47,7 +52,7 @@ export async function searchPlaces(query: string, prefecture?: string) {
         lat: place.geometry?.location.lat || 0,
         lng: place.geometry?.location.lng || 0,
         rating: place.rating || 0,
-        photos: place.photos?.map((p) => p.photo_reference) || [],
+        photos: place.photos?.map((p) => photoRefToUrl(p.photo_reference)) || [],
         cached_at: new Date().toISOString(),
         is_closed: isClosed,
       },
@@ -69,7 +74,7 @@ export async function searchPlaces(query: string, prefecture?: string) {
         try {
           const detail = await getPlaceDetail(s.place_id);
           if (detail?.photos && detail.photos.length > 0) {
-            const photoRefs = detail.photos.slice(0, 10).map((p) => p.photo_reference);
+            const photoRefs = detail.photos.slice(0, 10).map((p) => photoRefToUrl(p.photo_reference));
             await sb.from("saunas").update({ photos: photoRefs }).eq("id", s.id);
             s.photos = photoRefs;
           }

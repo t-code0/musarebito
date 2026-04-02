@@ -32,7 +32,10 @@ export async function GET(
         if (detail.website) updates.website = detail.website;
         if (detail.opening_hours) updates.opening_hours = detail.opening_hours;
         if (detail.reviews) updates.google_reviews = detail.reviews;
-        if (detail.photos) updates.photos = detail.photos.slice(0, 10).map((p) => p.photo_reference);
+        if (detail.photos) updates.photos = detail.photos.slice(0, 10).map((p) => {
+          const ref = p.photo_reference;
+          return ref.startsWith("http") ? ref : `https://maps.googleapis.com/maps/api/place/photo?maxwidth=800&photo_reference=${ref}&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+        });
         if (detail.business_status === "CLOSED_PERMANENTLY") {
           updates.is_closed = true;
         }
