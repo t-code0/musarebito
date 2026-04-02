@@ -59,6 +59,27 @@ export async function searchPlaces(query: string, prefecture?: string) {
     .from("saunas")
     .select("*")
     .ilike("name", `%${query}%`);
+
+  // Backfill photos for up to 5 facilities missing them
+  if (data) {
+    const noPhotos = data.filter((s) => (!s.photos || s.photos.length === 0) && s.place_id);
+    const toFetch = noPhotos.slice(0, 5);
+    await Promise.all(
+      toFetch.map(async (s) => {
+        try {
+          const detail = await getPlaceDetail(s.place_id);
+          if (detail?.photos && detail.photos.length > 0) {
+            const photoRefs = detail.photos.slice(0, 10).map((p) => p.photo_reference);
+            await sb.from("saunas").update({ photos: photoRefs }).eq("id", s.id);
+            s.photos = photoRefs;
+          }
+        } catch (e) {
+          console.error(`Photo backfill failed for ${s.name}:`, e);
+        }
+      })
+    );
+  }
+
   return data || [];
 }
 
