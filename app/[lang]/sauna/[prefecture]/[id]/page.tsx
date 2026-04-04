@@ -16,6 +16,7 @@ export default function SaunaDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [pollCount, setPollCount] = useState(0);
 
   const fetchData = async () => {
     try {
@@ -23,8 +24,10 @@ export default function SaunaDetailPage() {
       const data = await res.json();
       setSauna(data.sauna);
       setReviews(data.reviews || []);
+      return data.sauna;
     } catch (error) {
       console.error("Failed to fetch sauna:", error);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -33,6 +36,22 @@ export default function SaunaDetailPage() {
   useEffect(() => {
     fetchData();
   }, [id]);
+
+  // Poll for AI-generated data (score, summary) if missing
+  useEffect(() => {
+    if (!sauna || pollCount >= 3) return;
+    const needsData = !sauna.ai_summary || sauna.honmono_score == null;
+    if (!needsData) return;
+
+    const timer = setTimeout(async () => {
+      const updated = await fetchData();
+      setPollCount(c => c + 1);
+      if (updated?.ai_summary && updated?.honmono_score != null) {
+        setPollCount(3); // stop polling
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [sauna, pollCount]);
 
   if (loading) {
     return (
@@ -57,7 +76,7 @@ export default function SaunaDetailPage() {
     <main className="min-h-screen bg-gray-50">
       {/* Header Image */}
       <div className="relative h-64 md:h-80 bg-[#1B4332]">
-        {sauna.photos && sauna.photos[0] ? (
+        {sauna.photos?.[0] ? (
           <img
             src={sauna.photos[0]}
             alt={sauna.name}
@@ -88,14 +107,14 @@ export default function SaunaDetailPage() {
               <section className="bg-white rounded-xl shadow-sm p-6">
                 <h2 className="text-xl font-bold text-[#1B4332] mb-4">写真</h2>
                 <div className="grid grid-cols-3 gap-2">
-                  {[0, 2, 4, 6, 8, 1].map((idx) => sauna.photos![idx]).filter(Boolean).slice(0, 6).map((photo, i) => (
-                      <a key={i} href={photo} target="_blank" rel="noopener noreferrer">
-                        <img
-                          src={photo}
-                          alt={`${sauna.name} 写真${i + 1}`}
-                          className="w-full h-28 md:h-36 object-cover rounded-lg hover:opacity-80 transition"
-                        />
-                      </a>
+                  {sauna.photos.slice(0, 6).map((photo, i) => (
+                    <a key={i} href={photo} target="_blank" rel="noopener noreferrer">
+                      <img
+                        src={photo}
+                        alt={`${sauna.name} 写真${i + 1}`}
+                        className="w-full h-28 md:h-36 object-cover rounded-lg hover:opacity-80 transition"
+                      />
+                    </a>
                   ))}
                 </div>
               </section>

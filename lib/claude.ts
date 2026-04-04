@@ -65,26 +65,105 @@ async function fetchWebsiteContent(url: string): Promise<string> {
   return combined.slice(0, 5000);
 }
 
+/** Fetch image URLs from a website's HTML pages */
+export async function fetchWebsiteImages(websiteUrl: string): Promise<{ url: string; path: string }[]> {
+  const baseUrl = getBaseUrl(websiteUrl);
+  const subPages = ["/sauna/", "/spa/", "/restaurant/", "/food/", "/menu/", "/onsen/", "/bath/"];
+  const urls = [baseUrl, ...subPages.map((p) => `${baseUrl}${p}`)];
+
+  const excludePatterns = /thumbnail|icon|logo|banner|favicon|sprite|pixel|tracking|badge|button|arrow|loading|video|movie|concept|youtube|youtu\.be/i;
+  const validExtensions = /\.(jpe?g|png|webp|avif)(\?.*)?$/i;
+
+  const allImages: { url: string; path: string }[] = [];
+  const seen = new Set<string>();
+
+  const results = await Promise.allSettled(
+    urls.map(async (pageUrl) => {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const res = await fetch(pageUrl, {
+          signal: controller.signal,
+          headers: { "User-Agent": "Mozilla/5.0 (compatible; musarebito/1.0)" },
+        });
+        clearTimeout(timeout);
+        if (!res.ok) return [];
+        const html = await res.text();
+
+        // Extract img src from HTML (with full tag for dimension checks)
+        const imgRegex = /<img([^>]+)>/gi;
+        const srcRegex = /src=["']([^"']+)["']/i;
+        const widthRegex = /width=["']?(\d+)/i;
+        const heightRegex = /height=["']?(\d+)/i;
+        const images: { url: string; path: string }[] = [];
+        let m: RegExpExecArray | null;
+        while ((m = imgRegex.exec(html)) !== null) {
+          const tag = m[1];
+          const srcMatch = srcRegex.exec(tag);
+          if (!srcMatch) continue;
+          let src = srcMatch[1];
+          if (!src || src.startsWith("data:")) continue;
+
+          // Convert relative URLs to absolute
+          if (src.startsWith("//")) {
+            src = "https:" + src;
+          } else if (src.startsWith("/")) {
+            src = baseUrl + src;
+          } else if (!src.startsWith("http")) {
+            src = baseUrl + "/" + src;
+          }
+
+          if (excludePatterns.test(src)) continue;
+          if (!validExtensions.test(src)) continue;
+          if (seen.has(src)) continue;
+
+          // Skip small images (icons, decorations)
+          const w = widthRegex.exec(tag);
+          const h = heightRegex.exec(tag);
+          if ((w && parseInt(w[1]) <= 100) || (h && parseInt(h[1]) <= 100)) continue;
+
+          seen.add(src);
+          const pagePath = new URL(pageUrl).pathname;
+          images.push({ url: src, path: pagePath });
+        }
+        return images;
+      } catch {
+        return [];
+      }
+    })
+  );
+
+  for (const r of results) {
+    if (r.status === "fulfilled") allImages.push(...r.value);
+  }
+
+  return allImages.slice(0, 20);
+}
+
 export async function generateSummary(
   reviews: string[],
   name: string,
   websiteUrl?: string
 ): Promise<string> {
   const websiteContent = websiteUrl ? await fetchWebsiteContent(websiteUrl) : "";
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-api-key": process.env.ANTHROPIC_API_KEY!,
-      "anthropic-version": "2023-06-01",
-    },
-    body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 400,
-      messages: [
-        {
-          role: "user",
-          content: `あなたはサウナ専門ライターです。以下の【公式サイト情報】と【口コミ】から、この施設だけの唯一無二の特徴を200字で書いてください。
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 400,
+        messages: [
+          {
+            role: "user",
+            content: `あなたはサウナ専門ライターです。以下の【公式サイト情報】と【口コミ】から、この施設だけの唯一無二の特徴を200字で書いてください。
 必ず含めること：
 ・温泉の具体的な成分・泉質・深度・効能（数値で）
 ・炭酸泉・水風呂などの具体的なスペック
@@ -92,12 +171,15 @@ export async function generateSummary(
 禁止：「ととのい」「癒し」などの抽象語、一般的な説明
 【公式サイト情報】${websiteContent || "なし"}
 【口コミ】${reviews.join("\n---\n")}`,
-        },
-      ],
-    }),
-  });
-  const data = await res.json();
-  return data.content?.[0]?.text || "要約を生成できませんでした。";
+          },
+        ],
+      }),
+    });
+    const data = await res.json();
+    return data.content?.[0]?.text || "要約を生成できませんでした。";
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export async function generateFoodInfo(
@@ -106,10 +188,13 @@ export async function generateFoodInfo(
   address: string,
   websiteUrl?: string
 ): Promise<FoodInfo | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const websiteContent = websiteUrl ? await fetchWebsiteContent(websiteUrl) : "";
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY!,
@@ -142,16 +227,21 @@ export async function generateFoodInfo(
     return JSON.parse(jsonMatch[0]) as FoodInfo;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
 export async function calculateHonmonoScore(
   reviews: string[],
   name: string
-): Promise<ScoreDetail> {
+): Promise<ScoreDetail | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
+      signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY!,
@@ -204,10 +294,9 @@ ${reviews.join("\n---\n")}
       explanation: parsed.explanation || "",
     };
   } catch {
-    return {
-      water_bath: 10, heat_quality: 10, outside_air: 10,
-      cleanliness: 10, authenticity: 10, overall: 50,
-      explanation: "スコア生成中にエラーが発生しました",
-    };
+    return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
+

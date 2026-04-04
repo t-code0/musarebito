@@ -15,6 +15,12 @@ export function getSupabase() {
 export function getServiceSupabase() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      global: {
+        fetch: (url, options) =>
+          fetch(url as string, { ...options, cache: "no-store" } as RequestInit),
+      },
+    }
   );
 }

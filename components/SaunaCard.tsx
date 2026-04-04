@@ -22,7 +22,7 @@ export default function SaunaCard({ sauna, lang }: Props) {
       className="block bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow overflow-hidden"
     >
       <div className="relative h-48 bg-gray-200">
-        {sauna.photos && sauna.photos[0] ? (
+        {sauna.photos?.[0] ? (
           <img
             src={sauna.photos[0]}
             alt={sauna.name}
