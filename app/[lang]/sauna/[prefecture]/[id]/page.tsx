@@ -4,8 +4,9 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useParams } from "next/navigation";
 import HonmonoScore from "@/components/HonmonoScore";
 import ReviewModal from "@/components/ReviewModal";
+import SaunaGoods from "@/components/SaunaGoods";
+import AdSlot from "@/components/AdSlot";
 import { Sauna, Review, getFirstPhoto } from "@/types/sauna";
-import { HEALTH_CATEGORIES, pubmedUrl, doiUrl } from "@/lib/health-papers";
 
 interface VoteTally {
   up: number;
@@ -359,58 +360,6 @@ export default function SaunaDetailPage() {
               );
             })()}
 
-            {/* Health Evidence (PubMed papers) */}
-            <section className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-[#1B4332] mb-1">サウナの健康効果（エビデンス付き）</h2>
-              <p className="text-xs text-gray-500 mb-4">
-                PubMed掲載の査読済み論文に基づく科学的エビデンス。サウナ習慣がもたらす健康効果をカテゴリー別に紹介します。
-              </p>
-              <div className="space-y-5">
-                {HEALTH_CATEGORIES.map((cat) => (
-                  <div key={cat.id} className="border-l-4 border-[#1B4332] pl-4">
-                    <h3 className="font-bold text-base text-[#1B4332] mb-1">
-                      <span className="mr-1">{cat.emoji}</span>
-                      {cat.label}
-                    </h3>
-                    <p className="text-xs text-gray-500 mb-3">{cat.description}</p>
-                    <ul className="space-y-3">
-                      {cat.papers.map((p, i) => (
-                        <li key={i} className="text-sm">
-                          <p className="font-medium text-gray-800 leading-snug">{p.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {p.authors} · <em>{p.journal}</em> ({p.year})
-                          </p>
-                          <p className="text-xs text-gray-700 mt-1 leading-relaxed">{p.summary}</p>
-                          <div className="flex gap-3 mt-1">
-                            {p.pubmedId && (
-                              <a
-                                href={pubmedUrl(p.pubmedId)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                PubMedで読む
-                              </a>
-                            )}
-                            {p.doi && (
-                              <a
-                                href={doiUrl(p.doi)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                DOI: {p.doi}
-                              </a>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </section>
-
             {/* Google Map */}
             <section className="bg-white rounded-xl shadow-sm p-6">
               <h2 className="text-xl font-bold text-[#1B4332] mb-4">アクセス</h2>
@@ -623,37 +572,13 @@ export default function SaunaDetailPage() {
           </div>
         </div>
 
-        {/* Recommended Goods */}
-        <section className="clear-both mt-8 bg-white rounded-xl shadow-sm p-6 mb-8">
-          <h2 className="text-xl font-bold text-[#1B4332] mb-4">おすすめサウナグッズ</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { name: "サウナハット（今治タオル）", desc: "熱から頭を守る必需品" },
-              { name: "MOKUタオル", desc: "薄くて速乾、サウナに最適" },
-              { name: "アロマオイル（ユーカリ）", desc: "セルフロウリュのお供に" },
-            ].map(({ name, desc }) => (
-              <div key={name} className="border border-gray-200 rounded-lg p-4 flex flex-col">
-                <h3 className="font-bold text-sm text-[#1B4332] mb-1">{name}</h3>
-                <p className="text-xs text-gray-500 mb-3 flex-1">{desc}</p>
-                <div className="flex flex-wrap gap-2">
-                  <a
-                    href={`https://www.amazon.co.jp/s?k=${encodeURIComponent(name)}&tag=trustcheck-22`}
-                    target="_blank"
-                    rel="nofollow sponsored noopener noreferrer"
-                    className="flex-1 min-w-[100px] text-center text-xs py-2 rounded-lg font-medium text-white"
-                    style={{ background: "#ff9900" }}
-                  >Amazonで見る</a>
-                  <a
-                    href={`https://hb.afl.rakuten.co.jp/hgc/5225c217.0725d77e.5225c218.5705d87b/?pc=https://search.rakuten.co.jp/search/mall/${encodeURIComponent(name)}/`}
-                    target="_blank"
-                    rel="nofollow sponsored noopener noreferrer"
-                    className="flex-1 min-w-[100px] text-center text-xs py-2 rounded-lg font-medium text-white bg-red-600"
-                  >楽天で見る</a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Sauna Goods (Affiliate) */}
+        <div className="clear-both mt-8 mb-8">
+          <SaunaGoods source="detail" />
+        </div>
+
+        {/* Bottom Ad Slot */}
+        <AdSlot slotName="detail-bottom" className="mb-8" />
 
         {/* Share */}
         <div className="flex justify-center gap-4 mb-8 px-4">
