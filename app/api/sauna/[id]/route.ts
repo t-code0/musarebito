@@ -1,59 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase as getServiceClient } from "@/lib/supabase";
-import { getPlaceDetail, isCacheExpired } from "@/lib/places";
-import { generateSummary, generateFoodInfo, calculateHonmonoScore } from "@/lib/claude";
+import { calculateHonmonoScoreLocal } from "@/lib/claude";
 
 export const dynamic = "force-dynamic";
 
-/** Background AI generation only — saves to DB */
-async function generateAIInBackground(sauna: Record<string, unknown>) {
-  const sb = getServiceClient();
-  try {
-    const needsSummary = !sauna.ai_summary;
-    const needsScore = sauna.honmono_score == null;
-    const needsFood = !sauna.food_info;
-
-    if (!needsSummary && !needsScore && !needsFood) return;
-
-    const reviews = sauna.google_reviews as { text: string }[] | null;
-    const hasReviews = reviews && reviews.length > 0;
-    const reviewTexts = hasReviews ? reviews.map((r) => r.text).filter(Boolean) : [];
-    const canGenerateFromWeb = reviewTexts.length > 0 || !!sauna.website;
-    const textsForAI = reviewTexts.length > 0 ? reviewTexts : ["口コミなし"];
-
-    const [summary, foodInfo, score] = await Promise.allSettled([
-      needsSummary && canGenerateFromWeb ? generateSummary(textsForAI, sauna.name as string, sauna.website as string | undefined) : Promise.resolve(null),
-      needsFood && canGenerateFromWeb ? generateFoodInfo(textsForAI, sauna.name as string, (sauna.address as string) || "", sauna.website as string | undefined) : Promise.resolve(null),
-      needsScore && reviewTexts.length > 0 ? calculateHonmonoScore(reviewTexts, sauna.name as string) : Promise.resolve(null),
-    ]);
-
-    const aiUpdates: Record<string, unknown> = {};
-    const summaryVal = summary.status === "fulfilled" ? summary.value : null;
-    const foodVal = foodInfo.status === "fulfilled" ? foodInfo.value : null;
-    const scoreVal = score.status === "fulfilled" ? score.value : null;
-
-    if (summaryVal) aiUpdates.ai_summary = summaryVal;
-    if (scoreVal) { aiUpdates.honmono_score = scoreVal.overall; aiUpdates.score_detail = scoreVal; }
-    if (foodVal) aiUpdates.food_info = foodVal;
-
-    if (Object.keys(aiUpdates).length > 0) {
-      await sb.from("saunas").update(aiUpdates).eq("id", sauna.id);
-    }
-  } catch (e) {
-    console.error("AI generation error:", e);
-  }
-}
-
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   const sb = getServiceClient();
 
-  // Fast DB read (parallel)
+  // Fast DB read (parallel) — no Places API, no Claude API.
+  // Heavy work is delegated to /api/sauna/refresh/[id], called by the client.
   const [saunaResult, reviewsResult] = await Promise.all([
     sb.from("saunas").select("*").eq("id", params.id).single(),
-    sb.from("sauna_reviews").select("*").eq("sauna_id", params.id).order("created_at", { ascending: false }),
+    sb
+      .from("sauna_reviews")
+      .select("*")
+      .eq("sauna_id", params.id)
+      .order("created_at", { ascending: false }),
   ]);
 
   if (saunaResult.error || !saunaResult.data) {
@@ -61,50 +26,76 @@ export async function GET(
   }
 
   const sauna = saunaResult.data;
-  const reviews = reviewsResult.data || [];
 
-  // --- Phase 1: Places API refresh (SYNC — needed for photos/reviews) ---
-  try {
-    const cacheExpired = isCacheExpired(sauna.cached_at);
-    const missingPhotos = sauna.photos === null || (Array.isArray(sauna.photos) && sauna.photos.length === 0);
-
-    if ((cacheExpired || missingPhotos || (!sauna.phone && !sauna.website)) && sauna.place_id) {
-      const detail = await getPlaceDetail(sauna.place_id, sauna.website);
-      if (detail) {
-        const updates: Record<string, unknown> = {
-          cached_at: new Date().toISOString(),
-        };
-        if (detail.formatted_phone_number) updates.phone = detail.formatted_phone_number;
-        if (detail.website) updates.website = detail.website;
-        if (detail.opening_hours) updates.opening_hours = detail.opening_hours;
-        if (detail.reviews) updates.google_reviews = detail.reviews;
-        if (detail.photos) {
-          updates.photos = detail.photos;
-        } else if (missingPhotos) {
-          updates.photos = [];
-        }
-        if (detail.business_status === "CLOSED_PERMANENTLY") {
-          updates.is_closed = true;
-        }
-        if (cacheExpired) {
-          updates.ai_summary = null;
-          updates.honmono_score = null;
-          updates.score_detail = null;
-          updates.food_info = null;
-        }
-        await sb.from("saunas").update(updates).eq("id", sauna.id);
-        Object.assign(sauna, updates);
+  // Compute score immediately if missing — pure DB-driven, no Claude API needed.
+  // This guarantees the score is always present in the response.
+  if (sauna.honmono_score == null) {
+    try {
+      const gReviews = sauna.google_reviews as { text: string }[] | null;
+      const reviewTexts = (gReviews || [])
+        .map((r) => r.text)
+        .filter(Boolean);
+      const prevDetail = (sauna.score_detail as Record<string, unknown> | null) || null;
+      const savedRc = prevDetail?.review_count as number | undefined;
+      const rc = savedRc || gReviews?.length || 0;
+      const { score: scoreVal } = calculateHonmonoScoreLocal({
+        name: sauna.name,
+        rating: sauna.rating,
+        reviewCount: rc,
+        hasWebsite: !!sauna.website,
+        reviews: reviewTexts,
+        websiteContent: "",
+        aiSummary: sauna.ai_summary || "",
+      });
+      (scoreVal as Record<string, unknown>).review_count = rc;
+      // Preserve facility_facts from previous score_detail, if any
+      if (prevDetail?.facility_facts) {
+        (scoreVal as Record<string, unknown>).facility_facts = prevDetail.facility_facts;
       }
+      sauna.honmono_score = scoreVal.overall;
+      sauna.score_detail = scoreVal;
+      // Persist (fire-and-forget — don't block the response on this)
+      sb
+        .from("saunas")
+        .update({
+          honmono_score: scoreVal.overall,
+          score_detail: scoreVal,
+        })
+        .eq("id", sauna.id)
+        .then(() => {});
+    } catch (e) {
+      console.error("Inline score calc error:", e);
     }
-  } catch (e) {
-    console.error("Places API refresh error:", e);
   }
 
-  // --- Phase 2: AI generation (ASYNC — background, client polls) ---
-  const needsAI = !sauna.ai_summary || sauna.honmono_score == null || !sauna.food_info;
-  if (needsAI) {
-    generateAIInBackground({ ...sauna }).catch(e => console.error("Background AI error:", e));
-  }
+  // Filter out vote rows (stored as reviews with user_id starting with __vote__:)
+  const realReviews = (reviewsResult.data || []).filter(
+    (r) => !(typeof r.user_id === "string" && r.user_id.startsWith("__vote__:"))
+  );
 
-  return NextResponse.json({ sauna, reviews });
+  // Vote tallies
+  const voteRows = (reviewsResult.data || []).filter(
+    (r) => typeof r.user_id === "string" && r.user_id.startsWith("__vote__:")
+  );
+  let up = 0;
+  let down = 0;
+  for (const r of voteRows) {
+    if (r.user_id.endsWith(":up")) up++;
+    else if (r.user_id.endsWith(":down")) down++;
+  }
+  const total = up + down;
+  const votes = {
+    up,
+    down,
+    total,
+    percentage: total === 0 ? 0 : Math.round((up / total) * 100),
+  };
+
+  const response = NextResponse.json({
+    sauna,
+    reviews: realReviews,
+    votes,
+  });
+  response.headers.set("Cache-Control", "no-store, max-age=0");
+  return response;
 }
