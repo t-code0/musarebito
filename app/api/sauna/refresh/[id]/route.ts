@@ -6,6 +6,7 @@ import {
   generateFoodInfo,
   prefetchWebsiteContent,
   extractFacilityFacts,
+  translateSummaryToEnglish,
 } from "@/lib/claude";
 
 export const dynamic = "force-dynamic";
@@ -134,6 +135,26 @@ async function handle(id: string) {
 
       if (Object.keys(aiUpdates).length > 0) {
         await sb.from("saunas").update(aiUpdates).eq("id", sauna.id);
+      }
+    }
+
+    // --- Phase 3: English summary translation (cached in score_detail.ai_summary_en) ---
+    const sd = (sauna.score_detail as Record<string, unknown> | null) || {};
+    const hasJa = !!sauna.ai_summary;
+    const hasEn = typeof sd.ai_summary_en === "string" && (sd.ai_summary_en as string).length > 0;
+    if (hasJa && !hasEn) {
+      const en = await translateSummaryToEnglish(
+        sauna.ai_summary as string,
+        sauna.name,
+        sauna.address || ""
+      );
+      if (en) {
+        const updatedDetail = { ...sd, ai_summary_en: en };
+        sauna.score_detail = updatedDetail as never;
+        await sb
+          .from("saunas")
+          .update({ score_detail: updatedDetail })
+          .eq("id", sauna.id);
       }
     }
   } catch (e) {

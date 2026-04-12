@@ -35,6 +35,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://musarebito.vercel.app"),
   alternates: {
     canonical: "https://musarebito.vercel.app",
+    languages: {
+      ja: "https://musarebito.vercel.app/ja",
+      en: "https://musarebito.vercel.app/en",
+      "x-default": "https://musarebito.vercel.app/ja",
+    },
   },
   openGraph: {
     title: "蒸され人 | 全国サウナランキング",

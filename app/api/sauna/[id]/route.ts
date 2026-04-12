@@ -68,6 +68,12 @@ export async function GET(
     }
   }
 
+  // Lift cached English summary out of score_detail for easier client access
+  const sdAny = sauna.score_detail as Record<string, unknown> | null;
+  if (sdAny && typeof sdAny.ai_summary_en === "string") {
+    (sauna as Record<string, unknown>).ai_summary_en = sdAny.ai_summary_en;
+  }
+
   // Filter out vote rows (stored as reviews with user_id starting with __vote__:)
   const realReviews = (reviewsResult.data || []).filter(
     (r) => !(typeof r.user_id === "string" && r.user_id.startsWith("__vote__:"))

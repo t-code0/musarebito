@@ -7,6 +7,7 @@ import ReviewModal from "@/components/ReviewModal";
 import SaunaGoods from "@/components/SaunaGoods";
 import AdSlot from "@/components/AdSlot";
 import { Sauna, Review, getFirstPhoto } from "@/types/sauna";
+import { t, normalizeLang, type Lang } from "@/lib/i18n";
 
 interface VoteTally {
   up: number;
@@ -15,13 +16,17 @@ interface VoteTally {
   percentage: number;
 }
 
+interface SaunaWithEn extends Sauna {
+  ai_summary_en?: string | null;
+}
+
 export default function SaunaDetailPage() {
   const params = useParams();
-  const lang = params.lang as string;
+  const lang: Lang = normalizeLang(params.lang as string);
   const prefecture = decodeURIComponent(params.prefecture as string);
   const id = params.id as string;
 
-  const [sauna, setSauna] = useState<Sauna | null>(null);
+  const [sauna, setSauna] = useState<SaunaWithEn | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -106,24 +111,29 @@ export default function SaunaDetailPage() {
     const needsAi =
       !sauna.ai_summary ||
       !Array.isArray(sauna.photos) ||
-      sauna.photos.length === 0;
+      sauna.photos.length === 0 ||
+      (lang === "en" && !sauna.ai_summary_en);
     if (!needsAi) return;
     refreshTriggered.current = true;
     // Fire-and-forget background refresh
     fetch(`/api/sauna/refresh/${id}`, { method: "POST" }).catch(() => {});
-  }, [sauna, id]);
+  }, [sauna, id, lang]);
 
   // Poll for ai_summary while it's still missing
   useEffect(() => {
     if (!sauna || pollCount >= 10) return;
-    if (sauna.ai_summary) return;
+    const needsJa = !sauna.ai_summary;
+    const needsEn = lang === "en" && !sauna.ai_summary_en;
+    if (!needsJa && !needsEn) return;
     const timer = setTimeout(async () => {
       const updated = await fetchData();
-      setPollCount(c => c + 1);
-      if (updated?.ai_summary) setPollCount(10);
+      setPollCount((c) => c + 1);
+      const ok =
+        updated?.ai_summary && (lang !== "en" || updated?.ai_summary_en);
+      if (ok) setPollCount(10);
     }, 3000);
     return () => clearTimeout(timer);
-  }, [sauna, pollCount, fetchData]);
+  }, [sauna, pollCount, fetchData, lang]);
 
   // Photo list for lightbox
   const photoList: string[] = sauna && Array.isArray(sauna.photos) ? sauna.photos : [];
@@ -179,7 +189,7 @@ export default function SaunaDetailPage() {
       <main className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block w-8 h-8 border-4 border-[#1B4332] border-t-transparent rounded-full animate-spin" />
-          <p className="mt-4 text-gray-500">読み込み中...</p>
+          <p className="mt-4 text-gray-500">{t("detail_loading", lang)}</p>
         </div>
       </main>
     );
@@ -188,7 +198,7 @@ export default function SaunaDetailPage() {
   if (!sauna) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">サウナが見つかりませんでした</p>
+        <p className="text-gray-500">{t("detail_not_found", lang)}</p>
       </main>
     );
   }
@@ -214,16 +224,16 @@ export default function SaunaDetailPage() {
         <div className="absolute bottom-0 left-0 right-0 p-6 max-w-5xl mx-auto">
           <a
             href={`/${lang}`}
-            className="text-green-300 hover:text-green-200 text-sm mb-1 inline-block"
+            className="text-green-300 hover:text-green-200 text-base mb-1 inline-block"
           >
-            🏠 トップに戻る
+            {t("back_to_top", lang)}
           </a>
           <br />
           <a
             href={`/${lang}/sauna/${encodeURIComponent(prefecture)}`}
-            className="text-red-300 hover:text-white text-sm mb-2 inline-block"
+            className="text-red-300 hover:text-white text-base mb-2 inline-block"
           >
-            ← {prefecture}のサウナ一覧
+            {t("detail_back_to_list", lang, { pref: prefecture })}
           </a>
           <h1 className="text-3xl md:text-4xl font-bold text-white">{sauna.name}</h1>
           <p className="text-gray-300 mt-1">{sauna.address}</p>
@@ -246,7 +256,7 @@ export default function SaunaDetailPage() {
             {/* Photos */}
             {photoList.length > 0 && (
               <section className="bg-white rounded-xl shadow-sm p-6">
-                <h2 className="text-xl font-bold text-[#1B4332] mb-4">写真</h2>
+                <h2 className="text-xl font-bold text-[#1B4332] mb-4">{t("detail_photos", lang)}</h2>
                 <button onClick={() => setLightbox({ urls: photoList, idx: 0 })} className="w-full">
                   <img
                     src={photoList[0]}
@@ -271,26 +281,33 @@ export default function SaunaDetailPage() {
 
             {/* AI Summary */}
             <section className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-[#1B4332] mb-3">この施設の特徴</h2>
+              <h2 className="text-xl font-bold text-[#1B4332] mb-3">{t("detail_features", lang)}</h2>
               <p className="text-gray-700 leading-relaxed">
-                {sauna.ai_summary ||
-                  (sauna.google_reviews && sauna.google_reviews.length > 0
-                    ? "要約を生成中..."
-                    : "口コミが集まり次第、AI要約が自動生成されます。")}
+                {(() => {
+                  const summary =
+                    lang === "en" ? sauna.ai_summary_en || sauna.ai_summary : sauna.ai_summary;
+                  if (summary) return summary;
+                  if (sauna.google_reviews && sauna.google_reviews.length > 0)
+                    return t("detail_features_loading", lang);
+                  return t("detail_features_empty", lang);
+                })()}
               </p>
             </section>
 
             {/* Honmono Vote */}
             <section className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-[#1B4332] mb-3">この施設は本物？</h2>
+              <h2 className="text-xl font-bold text-[#1B4332] mb-3">{t("detail_vote_title", lang)}</h2>
               {votes.total > 0 && (
                 <div className="mb-4">
                   <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
                     <span>
                       <strong className="text-[#1B4332] text-lg">{votes.percentage}%</strong>
-                      <span className="ml-1">が「本物」と評価</span>
+                      <span className="ml-1">{t("detail_vote_label", lang)}</span>
                     </span>
-                    <span className="text-gray-500">{votes.total}票</span>
+                    <span className="text-gray-500">
+                      {votes.total}
+                      {t("detail_vote_count", lang)}
+                    </span>
                   </div>
                   <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
                     <div
@@ -306,18 +323,18 @@ export default function SaunaDetailPage() {
                   disabled={hasVoted || voting}
                   className="flex-1 py-3 rounded-lg font-bold text-white bg-[#1B4332] hover:bg-[#2D6A4F] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  👍 本物だと思う
+                  {t("detail_vote_yes", lang)}
                 </button>
                 <button
                   onClick={() => handleVote("down")}
                   disabled={hasVoted || voting}
                   className="flex-1 py-3 rounded-lg font-bold text-white bg-gray-500 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  👎 そうでもない
+                  {t("detail_vote_no", lang)}
                 </button>
               </div>
               {hasVoted && (
-                <p className="text-xs text-gray-500 mt-2 text-center">投票ありがとうございました</p>
+                <p className="text-xs text-gray-500 mt-2 text-center">{t("detail_vote_thanks", lang)}</p>
               )}
             </section>
 
@@ -362,7 +379,7 @@ export default function SaunaDetailPage() {
 
             {/* Google Map */}
             <section className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-[#1B4332] mb-4">アクセス</h2>
+              <h2 className="text-xl font-bold text-[#1B4332] mb-4">{t("detail_access", lang)}</h2>
               <iframe
                 src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyDwjqPnGN30_4dzEMQoTE11d6PsAskDp1A&q=${encodeURIComponent(sauna.name + " " + sauna.address)}&zoom=15`}
                 width="100%"
@@ -378,7 +395,7 @@ export default function SaunaDetailPage() {
                 rel="noopener noreferrer"
                 className="block text-center text-blue-600 hover:underline text-sm mt-3"
               >
-                Google マップで開く
+                {t("detail_open_in_maps", lang)}
               </a>
             </section>
 
@@ -397,29 +414,29 @@ export default function SaunaDetailPage() {
               const items = [
                 facts.sauna_temp_c != null && {
                   emoji: "🔥",
-                  label: "サウナ室温度",
+                  label: t("detail_facts_sauna_temp", lang),
                   value: `${facts.sauna_temp_c}℃`,
                 },
                 facts.water_bath_temp_c != null && {
                   emoji: "💧",
-                  label: "水風呂温度",
+                  label: t("detail_facts_water_temp", lang),
                   value: `${facts.water_bath_temp_c}℃`,
                 },
                 facts.has_outside_air !== null && {
                   emoji: "🌳",
-                  label: "外気浴",
-                  value: facts.has_outside_air ? "あり" : "なし",
+                  label: t("detail_facts_outside_air", lang),
+                  value: facts.has_outside_air ? t("detail_facts_yes", lang) : t("detail_facts_no", lang),
                 },
                 facts.loyly_type && {
                   emoji: "♨️",
-                  label: "ロウリュ",
+                  label: t("detail_facts_loyly", lang),
                   value: facts.loyly_type,
                 },
               ].filter(Boolean) as { emoji: string; label: string; value: string }[];
               if (items.length === 0) return null;
               return (
                 <section className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-bold text-[#1B4332] mb-4">サウナ・水風呂スペック</h2>
+                  <h2 className="text-xl font-bold text-[#1B4332] mb-4">{t("detail_facts", lang)}</h2>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {items.map((it) => (
                       <div
@@ -438,24 +455,24 @@ export default function SaunaDetailPage() {
 
             {/* Info */}
             <section className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-[#1B4332] mb-4 text-center">施設情報</h2>
+              <h2 className="text-xl font-bold text-[#1B4332] mb-4 text-center">{t("detail_info", lang)}</h2>
               <dl className="grid grid-cols-2 gap-y-3 gap-x-4 items-baseline">
                 {sauna.phone && (
                   <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">電話</dt>
+                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_phone", lang)}</dt>
                     <dd className="text-left text-gray-700 text-sm">{sauna.phone}</dd>
                   </>
                 )}
                 {sauna.website && (
                   <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">Web</dt>
+                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_web", lang)}</dt>
                     <dd className="text-left min-w-0">
                       <a href={sauna.website} target="_blank" rel="noopener noreferrer"
                         className="text-blue-600 hover:underline text-sm break-all">{sauna.website}</a>
                     </dd>
                   </>
                 )}
-                <dt className="text-right pr-4 text-gray-500 text-sm">Instagram</dt>
+                <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_instagram", lang)}</dt>
                 <dd className="text-left min-w-0">
                     {sauna.website && sauna.website.includes("instagram.com") ? (
                       <a href={sauna.website} target="_blank" rel="noopener noreferrer"
@@ -468,13 +485,13 @@ export default function SaunaDetailPage() {
                   </dd>
                 {sauna.rating && (
                   <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">Google評価</dt>
+                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_rating", lang)}</dt>
                     <dd className="text-left text-[#D97706] font-medium text-sm">★ {sauna.rating}</dd>
                   </>
                 )}
                 {sauna.opening_hours && (
                   <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">営業時間</dt>
+                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_hours", lang)}</dt>
                     <dd className="text-left text-gray-700 text-sm space-y-0.5">
                       {sauna.opening_hours.map((h, i) => (
                         <p key={i}>{typeof h === "object" && "text" in h ? h.text : String(h)}</p>
@@ -508,14 +525,14 @@ export default function SaunaDetailPage() {
             {/* Reviews */}
             <section className="bg-white rounded-xl shadow-sm p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-[#1B4332]">口コミ</h2>
+                <h2 className="text-xl font-bold text-[#1B4332]">{t("detail_reviews", lang)}</h2>
                 <button
                   onClick={() => setShowReviewModal(true)}
                   className="bg-[#D97706] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#B45309] transition-colors"
-                >口コミを書く</button>
+                >{t("detail_write_review", lang)}</button>
               </div>
               {reviews.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">まだ口コミはありません</p>
+                <p className="text-gray-400 text-center py-8">{t("detail_no_reviews", lang)}</p>
               ) : (
                 <div className="space-y-4">
                   {reviews.map((review) => (

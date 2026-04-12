@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, usePathname } from "next/navigation";
 import SaunaGoods from "@/components/SaunaGoods";
+import { t, normalizeLang, type Lang } from "@/lib/i18n";
 
 const prefectures = [
   "北海道",
@@ -75,8 +76,16 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const router = useRouter();
   const params = useParams();
-  const lang = (params.lang as string) || "ja";
+  const pathname = usePathname();
+  const lang: Lang = normalizeLang(params.lang as string);
   const [featured, setFeatured] = useState<FeaturedSauna[]>([]);
+
+  const switchLang = (next: Lang) => {
+    if (next === lang) return;
+    // Replace the leading /<lang>/ segment
+    const newPath = pathname.replace(/^\/(ja|en)(?=\/|$)/, `/${next}`);
+    router.push(newPath || `/${next}`);
+  };
 
   useEffect(() => {
     fetch("/api/sauna/search?featured=true")
@@ -108,14 +117,36 @@ export default function HomePage() {
     >
       {/* Hero */}
       <div className="flex flex-col items-center justify-center px-4 pt-12 md:pt-20 pb-12 md:pb-16">
+        {/* Language switcher */}
+        <div className="absolute top-4 right-4 flex gap-1 bg-white/10 backdrop-blur rounded-full p-1 border border-white/20">
+          <button
+            onClick={() => switchLang("ja")}
+            className={`min-w-[44px] h-11 px-3 rounded-full text-base font-medium transition ${
+              lang === "ja" ? "bg-[#D97706] text-white" : "text-white/70 hover:text-white"
+            }`}
+            aria-label={t("language_japanese", lang)}
+          >
+            🇯🇵 JA
+          </button>
+          <button
+            onClick={() => switchLang("en")}
+            className={`min-w-[44px] h-11 px-3 rounded-full text-base font-medium transition ${
+              lang === "en" ? "bg-[#D97706] text-white" : "text-white/70 hover:text-white"
+            }`}
+            aria-label={t("language_english", lang)}
+          >
+            🇬🇧 EN
+          </button>
+        </div>
+
         <h1 className="text-4xl md:text-8xl font-bold text-white mb-3">
-          蒸され人
+          {t("site_name", lang)}
         </h1>
         <p className="text-base md:text-2xl text-green-400 text-center">
-          むされびと
+          {t("site_subtitle", lang)}
         </p>
         <p className="text-base md:text-2xl text-green-400 text-center mb-8 md:mb-10">
-          ── 本物のサウナだけを、あなたに。
+          {t("site_tagline", lang)}
         </p>
 
         <form
@@ -126,14 +157,14 @@ export default function HomePage() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="サウナ名・エリアで検索..."
+            placeholder={t("search_placeholder", lang)}
             className="flex-1 h-12 md:h-16 px-5 rounded-lg text-base md:text-xl bg-white/10 text-white placeholder-white/40 border border-white/20 outline-none focus:ring-2 focus:ring-[#D97706] focus:border-transparent"
           />
           <button
             type="submit"
             className="bg-[#D97706] text-white h-12 md:h-16 px-6 md:px-10 rounded-lg text-base md:text-xl font-medium hover:bg-[#B45309] transition-colors"
           >
-            検索
+            {t("search_button", lang)}
           </button>
         </form>
       </div>
@@ -149,10 +180,10 @@ export default function HomePage() {
           }}
         >
           <h2 className="text-3xl font-bold text-green-400 mb-3 flex items-center gap-2">
-            <span>🔍</span> 蒸され人とは？
+            {t("home_about_title", lang)}
           </h2>
           <p className="text-base text-gray-200 leading-relaxed">
-            蒸され人は、全国のサウナ施設をGoogleの実データに基づいて評価・ランキングするサービスです。口コミ数・評価・サウナ設備の充実度など、複数の指標を組み合わせた独自の「本物スコア」で、本当に価値のあるサウナ施設を見つけることができます。
+            {t("home_about_body", lang)}
           </p>
         </div>
       </section>
@@ -168,16 +199,16 @@ export default function HomePage() {
           }}
         >
           <h2 className="text-3xl font-bold text-green-400 mb-4 flex items-center gap-2">
-            <span>🏆</span> 本物スコアとは？
+            {t("home_score_title", lang)}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
             {[
-              { name: "熱の質（17点）", desc: "サウナ室の温度・ロウリュ・アウフグースの充実度。" },
-              { name: "水風呂（17点）", desc: "水風呂の温度・深さ・水質。" },
-              { name: "外気浴（17点）", desc: "外気浴スペースの充実度・眺望。" },
-              { name: "清潔感（17点）", desc: "施設全体の清潔さ・アメニティ。" },
-              { name: "アロマ（17点）", desc: "アロマロウリュ・ヴィヒタ・薬草・ウィスキング。" },
-              { name: "サウナ特化度（17点）", desc: "サウナの充実度・専門性。" },
+              { name: `${t("home_score_axis_heat", lang)}（17）`, desc: t("home_score_desc_heat", lang) },
+              { name: `${t("home_score_axis_water", lang)}（17）`, desc: t("home_score_desc_water", lang) },
+              { name: `${t("home_score_axis_outside", lang)}（17）`, desc: t("home_score_desc_outside", lang) },
+              { name: `${t("home_score_axis_clean", lang)}（17）`, desc: t("home_score_desc_clean", lang) },
+              { name: `${t("home_score_axis_aroma", lang)}（17）`, desc: t("home_score_desc_aroma", lang) },
+              { name: `${t("home_score_axis_focus", lang)}（17）`, desc: t("home_score_desc_focus", lang) },
             ].map(({ name, desc }) => (
               <div
                 key={name}
@@ -195,10 +226,10 @@ export default function HomePage() {
             ))}
           </div>
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 sm:justify-start">
-            <p className="text-sm"><span className="text-base font-bold text-amber-400">S</span><span className="text-gray-300">(75〜) 🌟🌟🌟 本物</span></p>
-            <p className="text-sm"><span className="text-base font-bold text-amber-400">A</span><span className="text-gray-300">(60〜74) 🌟🌟 信頼できる</span></p>
-            <p className="text-sm"><span className="text-base font-bold text-amber-400">B</span><span className="text-gray-300">(45〜59) 🌟 普通</span></p>
-            <p className="text-sm"><span className="text-base font-bold text-amber-400">C</span><span className="text-gray-300">(〜44) 📈 発展に期待</span></p>
+            <p className="text-sm"><span className="text-base font-bold text-amber-400">S</span><span className="text-gray-300">{t("home_rank_s", lang)}</span></p>
+            <p className="text-sm"><span className="text-base font-bold text-amber-400">A</span><span className="text-gray-300">{t("home_rank_a", lang)}</span></p>
+            <p className="text-sm"><span className="text-base font-bold text-amber-400">B</span><span className="text-gray-300">{t("home_rank_b", lang)}</span></p>
+            <p className="text-sm"><span className="text-base font-bold text-amber-400">C</span><span className="text-gray-300">{t("home_rank_c", lang)}</span></p>
           </div>
         </div>
       </section>
@@ -206,7 +237,7 @@ export default function HomePage() {
       {/* Prefectures */}
       <section className="max-w-[95vw] mx-auto px-4 pb-16">
         <h2 className="text-2xl md:text-4xl font-bold text-white mb-6 text-center">
-          都道府県から探す
+          {t("home_prefs_title", lang)}
         </h2>
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
           {prefectures.map((pref) => (
@@ -226,7 +257,7 @@ export default function HomePage() {
       {/* Content Grid */}
       <section className="max-w-[85vw] mx-auto px-4 pb-16">
         <h2 className="text-3xl font-bold text-white mb-6 text-center">
-          コンテンツ
+          {t("home_content_title", lang)}
         </h2>
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {contentCards.map((card) => (
@@ -266,7 +297,7 @@ export default function HomePage() {
       {featured.length > 0 && (
         <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 pb-20">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
-            🔥 注目のサウナ
+            {t("home_featured_title", lang)}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {featured.map((sauna) => (

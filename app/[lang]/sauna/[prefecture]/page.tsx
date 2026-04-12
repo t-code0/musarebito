@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import SaunaCard from "@/components/SaunaCard";
 import AdSlot from "@/components/AdSlot";
 import { Sauna } from "@/types/sauna";
+import { t, normalizeLang, type Lang } from "@/lib/i18n";
 
 type SortKey = "score" | "rating" | "newest";
 
@@ -27,7 +28,7 @@ function sortSaunas(saunas: Sauna[], key: SortKey): Sauna[] {
 
 export default function PrefecturePage() {
   const params = useParams();
-  const lang = params.lang as string;
+  const lang: Lang = normalizeLang(params.lang as string);
   const prefecture = decodeURIComponent(params.prefecture as string);
   const [saunas, setSaunas] = useState<Sauna[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,11 +107,13 @@ export default function PrefecturePage() {
       <div className="py-8 px-4 sm:px-6" style={{ background: "linear-gradient(180deg, #2d1515 0%, #1a0a0a 100%)" }}>
         <a
           href={`/${lang}`}
-          className="text-red-300 hover:text-white text-sm mb-2 inline-block"
+          className="text-red-300 hover:text-white text-base mb-2 inline-block"
         >
-          ← トップに戻る
+          {lang === "en" ? "← Back to home" : "← トップに戻る"}
         </a>
-        <h1 className="text-3xl font-bold text-white">{prefecture}のサウナ</h1>
+        <h1 className="text-3xl font-bold text-white">
+          {lang === "en" ? `Saunas in ${prefecture}` : `${prefecture}のサウナ`}
+        </h1>
       </div>
 
       {/* Score explanation */}
@@ -124,16 +127,16 @@ export default function PrefecturePage() {
           }}
         >
           <h2 className="text-2xl font-bold text-green-400 mb-4 flex items-center gap-2">
-            <span>🏆</span> 本物スコアとは？
+            {t("home_score_title", lang)}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
             {[
-              { name: "熱の質（17点）", desc: "サウナ室の温度・ロウリュ・アウフグースの充実度。" },
-              { name: "水風呂（17点）", desc: "水風呂の温度・深さ・水質。" },
-              { name: "外気浴（17点）", desc: "外気浴スペースの充実度・眺望。" },
-              { name: "清潔感（17点）", desc: "施設全体の清潔さ・アメニティ。" },
-              { name: "アロマ（17点）", desc: "アロマロウリュ・ヴィヒタ・薬草・ウィスキング。" },
-              { name: "サウナ特化度（17点）", desc: "サウナの充実度・専門性。" },
+              { name: `${t("home_score_axis_heat", lang)}（17）`, desc: t("home_score_desc_heat", lang) },
+              { name: `${t("home_score_axis_water", lang)}（17）`, desc: t("home_score_desc_water", lang) },
+              { name: `${t("home_score_axis_outside", lang)}（17）`, desc: t("home_score_desc_outside", lang) },
+              { name: `${t("home_score_axis_clean", lang)}（17）`, desc: t("home_score_desc_clean", lang) },
+              { name: `${t("home_score_axis_aroma", lang)}（17）`, desc: t("home_score_desc_aroma", lang) },
+              { name: `${t("home_score_axis_focus", lang)}（17）`, desc: t("home_score_desc_focus", lang) },
             ].map(({ name, desc }) => (
               <div
                 key={name}
@@ -151,10 +154,10 @@ export default function PrefecturePage() {
             ))}
           </div>
           <div className="flex flex-col sm:flex-row sm:flex-wrap gap-1 sm:gap-3 sm:justify-start">
-            <p className="text-xs"><span className="text-sm font-bold text-amber-400">S</span><span className="text-gray-300">(75〜) 🌟🌟🌟 本物</span></p>
-            <p className="text-xs"><span className="text-sm font-bold text-amber-400">A</span><span className="text-gray-300">(60〜74) 🌟🌟 信頼できる</span></p>
-            <p className="text-xs"><span className="text-sm font-bold text-amber-400">B</span><span className="text-gray-300">(45〜59) 🌟 普通</span></p>
-            <p className="text-xs"><span className="text-sm font-bold text-amber-400">C</span><span className="text-gray-300">(〜44) 📈 発展に期待</span></p>
+            <p className="text-xs"><span className="text-sm font-bold text-amber-400">S</span><span className="text-gray-300">{t("home_rank_s", lang)}</span></p>
+            <p className="text-xs"><span className="text-sm font-bold text-amber-400">A</span><span className="text-gray-300">{t("home_rank_a", lang)}</span></p>
+            <p className="text-xs"><span className="text-sm font-bold text-amber-400">B</span><span className="text-gray-300">{t("home_rank_b", lang)}</span></p>
+            <p className="text-xs"><span className="text-sm font-bold text-amber-400">C</span><span className="text-gray-300">{t("home_rank_c", lang)}</span></p>
           </div>
         </div>
       </div>
@@ -163,12 +166,12 @@ export default function PrefecturePage() {
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full animate-spin" />
-            <p className="mt-4 text-red-200/70">サウナを検索中...</p>
+            <p className="mt-4 text-red-200/70">{t("list_loading", lang)}</p>
           </div>
         ) : saunas.length === 0 ? (
           <div className="text-center py-20 text-red-200/70">
-            <p className="text-lg">サウナが見つかりませんでした</p>
-            <p className="text-sm mt-2">別のキーワードで検索してみてください</p>
+            <p className="text-lg">{t("list_empty", lang)}</p>
+            <p className="text-sm mt-2">{t("list_empty_hint", lang)}</p>
           </div>
         ) : (
           <>
@@ -183,7 +186,7 @@ export default function PrefecturePage() {
                       : "bg-red-900/50 text-red-200 border border-red-800/50"
                   }`}
                 >
-                  すべて({saunas.length})
+                  {lang === "en" ? "All" : "すべて"}({saunas.length})
                 </button>
                 {(() => {
                   let lastArea = "";
@@ -216,15 +219,17 @@ export default function PrefecturePage() {
 
             {/* Sort control */}
             <div className="flex justify-between items-center mb-4">
-              <span className="text-xs sm:text-sm text-red-200/70">{filtered.length}件</span>
+              <span className="text-xs sm:text-sm text-red-200/70">
+                {lang === "en" ? `${filtered.length} results` : `${filtered.length}件`}
+              </span>
               <select
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value as SortKey)}
                 className="text-xs sm:text-sm border border-red-800/50 rounded-lg px-2 py-1.5 bg-red-900/50 text-red-200 focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                <option value="score">本物スコア順</option>
-                <option value="rating">Google評価順</option>
-                <option value="newest">新着順</option>
+                <option value="score">{t("sort_score", lang)}</option>
+                <option value="rating">{t("sort_rating", lang)}</option>
+                <option value="newest">{t("sort_newest", lang)}</option>
               </select>
             </div>
 
@@ -271,9 +276,11 @@ export default function PrefecturePage() {
               <div className="text-center mt-6">
                 <button
                   onClick={() => setShowAll(true)}
-                  className="px-6 py-2 bg-red-700 text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors"
+                  className="px-6 py-2 bg-red-700 text-white rounded-lg text-base font-medium hover:bg-red-600 transition-colors"
                 >
-                  もっと見る（残り{filtered.length - 12}件）
+                  {lang === "en"
+                    ? `Show more (${filtered.length - 12} remaining)`
+                    : `もっと見る（残り${filtered.length - 12}件）`}
                 </button>
               </div>
             )}

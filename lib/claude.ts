@@ -490,6 +490,61 @@ JSONのみで返答（他の文字は禁止）:
   }
 }
 
+/**
+ * Translate a Japanese sauna facility summary into English.
+ * Used for the /en/ inbound-tourist UI. Cached in score_detail.ai_summary_en.
+ */
+export async function translateSummaryToEnglish(
+  jaSummary: string,
+  facilityName: string,
+  address: string
+): Promise<string | null> {
+  if (!jaSummary) return null;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 300,
+        messages: [
+          {
+            role: "user",
+            content: `Translate this Japanese sauna facility description into natural, inviting English (max 200 chars) for inbound tourists visiting Japan.
+
+Rules:
+- Keep proper nouns (facility name) in romaji.
+- Preserve the warm, vivid tone of the original.
+- Do NOT include disclaimers or apologies.
+- Return ONLY the English translation, no commentary.
+
+Facility name: ${facilityName}
+Address: ${address}
+
+Japanese description:
+${jaSummary}`,
+          },
+        ],
+      }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const text = data.content?.[0]?.text;
+    return typeof text === "string" ? text.trim() : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 /** Find the sauna room photo index from a list of photo URLs using Vision */
 export async function findSaunaPhotoIndex(
   photoUrls: string[]
