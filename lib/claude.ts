@@ -341,6 +341,39 @@ export function calculateHonmonoScoreLocal(input: {
     facility = Math.max(facility, 9);
   }
 
+  // Baseline floors — facilities indexed as a sauna deserve a non-zero starting score
+  // even if Google reviews are too sparse to surface keywords. Without these floors,
+  // niche/young facilities ended up with three or four 0s, looking worse than reality.
+  const hasMinimalSignal = reviewCount >= 1 || !!websiteContent || !!aiSummary;
+  if (hasMinimalSignal) {
+    if (/サウナ|SAUNA|Sauna|サ活/i.test(name) || saunaSpec > 0) {
+      saunaSpec = Math.max(saunaSpec, 4);
+    } else {
+      saunaSpec = Math.max(saunaSpec, 3);
+    }
+    aroma = Math.max(aroma, 3);
+    facility = Math.max(facility, 4);
+    if (rating !== null && rating >= 3.5) {
+      saunaSpec = Math.max(saunaSpec, 6);
+      aroma = Math.max(aroma, 5);
+      facility = Math.max(facility, 6);
+    }
+  }
+
+  // Re-score safety net — if 3+ category buckets are still 0, rescue them
+  // with the smallest non-zero value so the user never sees an all-zero card.
+  const buckets = [visit, quality, saunaSpec, trust, aroma, facility];
+  const zeroCount = buckets.filter((v) => v === 0).length;
+  if (zeroCount >= 3) {
+    if (visit === 0 && reviewCount >= 1) visit = 3;
+    if (quality === 0 && rating !== null && rating > 0)
+      quality = Math.max(1, Math.round((rating || 1) * 2));
+    if (saunaSpec === 0) saunaSpec = 3;
+    if (trust === 0) trust = 2;
+    if (aroma === 0) aroma = 3;
+    if (facility === 0) facility = 3;
+  }
+
   const overall = visit + quality + saunaSpec + trust + aroma + facility;
   const allMatched = [...saunaKw, ...aromaKw, ...facKw].filter(kw => allText.includes(kw));
   const matchedKw = Array.from(new Set(allMatched));
@@ -491,17 +524,24 @@ JSONのみで返答（他の文字は禁止）:
 }
 
 /**
- * Translate a Japanese sauna facility summary into English.
- * Used for the /en/ inbound-tourist UI. Cached in score_detail.ai_summary_en.
+ * Translate (or summarise + translate) a Japanese sauna facility description
+ * into a short English paragraph for inbound tourists.
+ *
+ * The input may be a short AI summary (~200 chars) OR a much longer
+ * markdown article scraped from the facility website. Either way, we always
+ * return a concise 200-300 char English paragraph.
  */
 export async function translateSummaryToEnglish(
   jaSummary: string,
   facilityName: string,
   address: string
 ): Promise<string | null> {
-  if (!jaSummary) return null;
+  if (!jaSummary || jaSummary.trim().length === 0) return null;
+  // Hard cap on input so very long markdown articles don't blow up tokens
+  const truncated = jaSummary.replace(/\s+/g, " ").slice(0, 1800);
+
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
+  const timeout = setTimeout(() => controller.abort(), 25000);
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -513,32 +553,47 @@ export async function translateSummaryToEnglish(
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
-        max_tokens: 300,
+        max_tokens: 500,
         messages: [
           {
             role: "user",
-            content: `Translate this Japanese sauna facility description into natural, inviting English (max 200 chars) for inbound tourists visiting Japan.
+            content: `You are writing a short English description of a Japanese sauna facility for inbound tourists.
+
+Source material is in Japanese and may be a short AI summary OR a long marketing article — produce ONE concise English paragraph (180–280 characters, ~2-3 sentences) that captures what makes this facility special.
 
 Rules:
-- Keep proper nouns (facility name) in romaji.
-- Preserve the warm, vivid tone of the original.
-- Do NOT include disclaimers or apologies.
-- Return ONLY the English translation, no commentary.
+- Keep proper nouns (facility name, neighbourhood) in romaji or English.
+- Warm, inviting, evocative tone — not a brochure.
+- Mention concrete differentiators (sauna types, water bath, outdoor cool-down, food, etc.) when present.
+- Do NOT include disclaimers, apologies, headings or commentary.
+- Return ONLY the English paragraph, nothing else.
 
 Facility name: ${facilityName}
 Address: ${address}
 
-Japanese description:
-${jaSummary}`,
+Japanese source:
+${truncated}`,
           },
         ],
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[translateSummary] API error:", res.status);
+      return null;
+    }
     const data = await res.json();
     const text = data.content?.[0]?.text;
-    return typeof text === "string" ? text.trim() : null;
-  } catch {
+    if (typeof text !== "string") return null;
+    // Strip surrounding quotes / leading "Translation:" prefixes the model
+    // sometimes adds despite our instructions.
+    return text
+      .trim()
+      .replace(/^["「『]/, "")
+      .replace(/["」』]$/, "")
+      .replace(/^(Translation|English|Output)\s*:\s*/i, "")
+      .trim();
+  } catch (e) {
+    console.error("[translateSummary] error:", e);
     return null;
   } finally {
     clearTimeout(timeout);

@@ -83,6 +83,13 @@ const STRINGS: Dict = {
   detail_vote_count: { ja: "票", en: "votes" },
   detail_photos: { ja: "写真", en: "Photos" },
   detail_food: { ja: "グルメ＆周辺情報", en: "Food & nearby" },
+  detail_food_restaurant: { ja: "施設内の名物メニュー", en: "Signature menu inside" },
+  detail_food_local: { ja: "周辺ご当地グルメ", en: "Local specialties nearby" },
+  detail_food_spots: { ja: "近くの観光スポット", en: "Tourist spots nearby" },
+  detail_food_explore_more: {
+    ja: "この周辺のお店をもっと探す",
+    en: "Find more restaurants nearby",
+  },
   detail_facts: { ja: "サウナ・水風呂スペック", en: "Sauna & cold bath specs" },
   detail_facts_sauna_temp: { ja: "サウナ室温度", en: "Sauna room temp" },
   detail_facts_water_temp: { ja: "水風呂温度", en: "Cold bath temp" },

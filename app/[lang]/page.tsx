@@ -293,6 +293,72 @@ export default function HomePage() {
         <SaunaGoods source="home" />
       </section>
 
+      {/* HONMONO Series */}
+      <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 mb-12">
+        <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
+          {lang === "en" ? "🏆 HONMONO Series" : "🏆 HONMONOシリーズ"}
+        </h2>
+        <p className="text-center text-white/60 text-sm md:text-base mb-6">
+          {lang === "en"
+            ? "Our family of evidence-based search apps. Find the real deal in every category."
+            : "本物だけを探すための姉妹サービス。各分野で「課金しても使いたい」を追求中。"}
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[
+            {
+              icon: "🧪",
+              name_ja: "添加物検索図鑑",
+              name_en: "Food Additive Encyclopedia",
+              desc_ja: "食品添加物の安全性を論文ベースで検索。子育て世代・健康意識の高い人に。",
+              desc_en: "Search food additives by peer-reviewed research. Built for health-conscious families.",
+              href: "https://tenkabutsu-zukan.vercel.app/ja",
+            },
+            {
+              icon: "🥗",
+              name_ja: "栄養成分検索図鑑",
+              name_en: "Nutrient Encyclopedia",
+              desc_ja: "栄養成分とサプリを論文で比較。サプリ選びを科学的に。",
+              desc_en: "Compare nutrients and supplements by clinical evidence.",
+              href: "https://eiyo-zukan.vercel.app/ja",
+            },
+            {
+              icon: "🍽",
+              name_ja: "リタマ",
+              name_en: "Ritama",
+              desc_ja: "近所の本物のお店を本物スコアで探す。食べログにない深い情報を。",
+              desc_en: "Discover authentic local restaurants ranked by HONMONO score.",
+              href: "https://ritama.vercel.app/ja",
+            },
+          ].map((s) => (
+            <a
+              key={s.href}
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-2xl p-5 transition-transform hover:scale-[1.02]"
+              style={{
+                background:
+                  "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.08) 100%)",
+                border: "1px solid rgba(255,255,255,0.2)",
+                boxShadow:
+                  "0 8px 24px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.1)",
+              }}
+            >
+              <div className="text-3xl mb-2">{s.icon}</div>
+              <h3 className="text-lg font-bold text-white mb-2">
+                {lang === "en" ? s.name_en : s.name_ja}
+              </h3>
+              <p className="text-sm text-white/60 leading-relaxed mb-4">
+                {lang === "en" ? s.desc_en : s.desc_ja}
+              </p>
+              <span className="inline-block text-sm px-4 py-2 rounded-full bg-amber-500 text-white font-bold">
+                {lang === "en" ? "Open →" : "サイトを見る →"}
+              </span>
+            </a>
+          ))}
+        </div>
+      </section>
+
       {/* Featured Saunas - Rich */}
       {featured.length > 0 && (
         <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 pb-20">

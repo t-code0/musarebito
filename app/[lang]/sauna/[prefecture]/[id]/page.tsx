@@ -348,17 +348,17 @@ export default function SaunaDetailPage() {
               if (!hasRestaurant && validFoods.length === 0 && validSpots.length === 0) return null;
               return (
                 <section className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-bold text-[#1B4332] mb-4">グルメ＆周辺情報</h2>
+                  <h2 className="text-xl font-bold text-[#1B4332] mb-4">{t("detail_food", lang)}</h2>
                   <div className="space-y-4">
                     {hasRestaurant && (
                       <div>
-                        <h3 className="font-bold text-sm text-gray-500 mb-1">施設内の名物メニュー</h3>
+                        <h3 className="font-bold text-sm text-gray-500 mb-1">{t("detail_food_restaurant", lang)}</h3>
                         <p className="text-gray-700">{fi.restaurant}</p>
                       </div>
                     )}
                     {validFoods.length > 0 && (
                       <div>
-                        <h3 className="font-bold text-sm text-gray-500 mb-1">周辺ご当地グルメ</h3>
+                        <h3 className="font-bold text-sm text-gray-500 mb-1">{t("detail_food_local", lang)}</h3>
                         <ul className="list-disc list-inside text-gray-700 space-y-1">
                           {validFoods.map((food: string, i: number) => <li key={i}>{food}</li>)}
                         </ul>
@@ -366,12 +366,20 @@ export default function SaunaDetailPage() {
                     )}
                     {validSpots.length > 0 && (
                       <div>
-                        <h3 className="font-bold text-sm text-gray-500 mb-1">近くの観光スポット</h3>
+                        <h3 className="font-bold text-sm text-gray-500 mb-1">{t("detail_food_spots", lang)}</h3>
                         <ul className="list-disc list-inside text-gray-700 space-y-1">
                           {validSpots.map((spot: string, i: number) => <li key={i}>{spot}</li>)}
                         </ul>
                       </div>
                     )}
+                    <a
+                      href={`https://ritama.vercel.app/${lang}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-center bg-[#D97706] hover:bg-[#B45309] text-white font-bold py-3 rounded-lg text-sm transition-colors mt-2"
+                    >
+                      🍽 {t("detail_food_explore_more", lang)}
+                    </a>
                   </div>
                 </section>
               );
