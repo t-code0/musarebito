@@ -49,9 +49,15 @@ const products: Product[] = [
   { name: "今治ポンチョ", category: "サウナポンチョ", description: "今治タオルの肌触りで全身を包む贅沢。吸水力も最高峰、外気浴が至福の時間になる。" },
   // ドリンク
   { name: "オロポ(オロナミンC+ポカリ)", category: "ドリンク", description: "オロナミンC×ポカリスエット。サウナ後の至福の一杯、通称オロポ。これを飲むためにサウナに行く人、続出中。" },
+  { name: "Chill Cola（チルコーラ）", category: "ドリンク", description: "サウナ発のクラフトコーラ。天然スパイスとハーブが織りなす刺激と爽快感、サウナ後の新定番ドリンク。" },
+  { name: "Chill缶（チル缶）", category: "ドリンク", description: "サウナドリンクブランドChillの缶タイプ。キンキンに冷やして水風呂後に一気飲み、至福のととのいタイム。" },
+  { name: "オロナミンC", category: "ドリンク", description: "ビタミンC配合の元気ハツラツドリンク。オロポの片割れとしても、単体でもサウナ後の定番。" },
+  { name: "ポカリスエット", category: "ドリンク", description: "発汗で失われた水分・電解質を素早く補給。サウナ前後の水分補給の王道、医師も推奨する定番。" },
+  { name: "デカビタC", category: "ドリンク", description: "ビタミンC・ローヤルゼリー配合の炭酸栄養ドリンク。サウナ後のシャキッとした爽快感が癖になる。" },
+  { name: "VAAM（ヴァーム）", category: "ドリンク", description: "体脂肪を燃やすアミノ酸飲料。サウナ前に飲めば脂肪燃焼効率アップ、フィットネスサウナーの相棒。" },
+  { name: "OS-1（経口補水液）", category: "ドリンク", description: "医療現場でも使われる経口補水液。大量発汗後の電解質バランスを最速で回復、サウナの安全装置。" },
   { name: "イオンウォーター", category: "ドリンク", description: "カロリー控えめなのに電解質しっかり補給。サウナ前後の水分チャージはこれ一択。" },
   { name: "ヤクルト1000", category: "ドリンク", description: "乳酸菌シロタ株1000億個の腸活パワー。サウナ×ヤクルト1000で、ととのいの先へ。" },
-  { name: "サウナドリンクセット", category: "ドリンク", description: "オロナミンC・ポカリ・デカビタの黄金セット。冷蔵庫に常備すれば、毎回のサ活が完結する。" },
   // サウナ本・漫画
   { name: "サ道(タナカカツキ)", category: "サウナ本・漫画", description: "サウナブームはここから始まった。読めばサウナの見え方が180度変わる、全サウナーのバイブル。" },
   { name: "マンガ サ道(タナカカツキ)", category: "サウナ本・漫画", description: "ドラマ化もされた大人気コミック。笑えて、学べて、サウナに行きたくなる。未読は損。" },
@@ -230,7 +236,7 @@ export default function GoodsPage() {
                   className="text-white text-xl sm:text-2xl font-bold text-center drop-shadow-lg"
                   style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
                 >
-                  {product.category}
+                  {product.name}
                 </span>
               </div>
               <div className="p-5 flex flex-col flex-1">

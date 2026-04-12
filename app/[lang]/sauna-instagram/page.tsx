@@ -12,7 +12,7 @@ import {
 } from "@/lib/sauna-instagram";
 import { normalizeLang } from "@/lib/i18n";
 
-const CATEGORIES: InstagramCategory[] = ["official", "review", "goods", "female"];
+const CATEGORIES: InstagramCategory[] = ["review", "brand", "female", "goods"];
 
 export default function SaunaInstagramPage() {
   const params = useParams();

@@ -463,49 +463,51 @@ export default function SaunaDetailPage() {
 
             {/* Info */}
             <section className="bg-white rounded-xl shadow-sm p-6">
-              <h2 className="text-xl font-bold text-[#1B4332] mb-4 text-center">{t("detail_info", lang)}</h2>
-              <dl className="grid grid-cols-2 gap-y-3 gap-x-4 items-baseline">
+              <h2 className="text-xl font-bold text-[#1B4332] mb-4">{t("detail_info", lang)}</h2>
+              <dl className="space-y-3">
                 {sauna.phone && (
-                  <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_phone", lang)}</dt>
-                    <dd className="text-left text-gray-700 text-sm">{sauna.phone}</dd>
-                  </>
+                  <div className="flex gap-3">
+                    <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_phone", lang)}</dt>
+                    <dd className="text-gray-700 text-sm">{sauna.phone}</dd>
+                  </div>
                 )}
                 {sauna.website && (
-                  <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_web", lang)}</dt>
-                    <dd className="text-left min-w-0">
+                  <div className="flex gap-3">
+                    <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_web", lang)}</dt>
+                    <dd className="min-w-0">
                       <a href={sauna.website} target="_blank" rel="noopener noreferrer"
                         className="text-blue-600 hover:underline text-sm break-all">{sauna.website}</a>
                     </dd>
-                  </>
+                  </div>
                 )}
-                <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_instagram", lang)}</dt>
+                <div className="flex gap-3">
+                <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_instagram", lang)}</dt>
                 <dd className="text-left min-w-0">
                     {sauna.website && sauna.website.includes("instagram.com") ? (
                       <a href={sauna.website} target="_blank" rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm">公式Instagram</a>
+                        className="text-blue-600 hover:underline text-sm">{lang === "en" ? "Official Instagram" : "公式Instagram"}</a>
                     ) : (
                       <a href={`https://www.instagram.com/explore/tags/${encodeURIComponent(sauna.name.replace(/[\s&()（）・\-\[\]「」]/g, ""))}/`}
                         target="_blank" rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline text-sm break-all">#{sauna.name.replace(/[\s&()（）・\-\[\]「」]/g, "")} の投稿を見る</a>
+                        className="text-blue-600 hover:underline text-sm break-all">#{sauna.name.replace(/[\s&()（）・\-\[\]「」]/g, "")} {lang === "en" ? "posts" : "の投稿を見る"}</a>
                     )}
                   </dd>
+                </div>
                 {sauna.rating && (
-                  <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_rating", lang)}</dt>
-                    <dd className="text-left text-[#D97706] font-medium text-sm">★ {sauna.rating}</dd>
-                  </>
+                  <div className="flex gap-3">
+                    <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_rating", lang)}</dt>
+                    <dd className="text-[#D97706] font-medium text-sm">★ {sauna.rating}</dd>
+                  </div>
                 )}
                 {sauna.opening_hours && (
-                  <>
-                    <dt className="text-right pr-4 text-gray-500 text-sm">{t("detail_info_hours", lang)}</dt>
-                    <dd className="text-left text-gray-700 text-sm space-y-0.5">
+                  <div className="flex gap-3">
+                    <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_hours", lang)}</dt>
+                    <dd className="text-gray-700 text-sm space-y-0.5">
                       {sauna.opening_hours.map((h, i) => (
                         <p key={i}>{typeof h === "object" && "text" in h ? h.text : String(h)}</p>
                       ))}
                     </dd>
-                  </>
+                  </div>
                 )}
               </dl>
             </section>
@@ -513,7 +515,7 @@ export default function SaunaDetailPage() {
             {/* Premium Teaser */}
             <section className="rounded-xl p-6 relative overflow-hidden" style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)" }}>
               <div className="blur-sm pointer-events-none">
-                <h3 className="text-white font-bold mb-2">混雑時間帯</h3>
+                <h3 className="text-white font-bold mb-2">{lang === "en" ? "Peak hours" : "混雑時間帯"}</h3>
                 <div className="flex gap-1 h-16">
                   {[3,5,8,12,15,12,10,8,6,4,2,1].map((h,i) => (
                     <div key={i} className="flex-1 bg-green-500/30 rounded-t" style={{ height: h*4 + "px", marginTop: "auto" }} />
@@ -522,7 +524,7 @@ export default function SaunaDetailPage() {
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
                 <a href={`/${lang}/premium`} className="bg-amber-500 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-amber-400 transition-colors shadow-lg">
-                  🔒 プレミアムで詳しく見る
+                  🔒 {lang === "en" ? "Unlock with Premium" : "プレミアムで詳しく見る"}
                 </a>
               </div>
             </section>
@@ -618,7 +620,7 @@ export default function SaunaDetailPage() {
             className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white text-sm hover:opacity-80"
           >LINE</a>
           <button
-            onClick={() => { navigator.clipboard.writeText(window.location.href); alert("URLをコピーしました"); }}
+            onClick={() => { navigator.clipboard.writeText(window.location.href); alert(lang === "en" ? "URL copied!" : "URLをコピーしました"); }}
             className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center text-white text-sm hover:opacity-80"
           >URL</button>
         </div>

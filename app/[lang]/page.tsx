@@ -5,60 +5,74 @@ import { useRouter, useParams, usePathname } from "next/navigation";
 import SaunaGoods from "@/components/SaunaGoods";
 import { t, normalizeLang, type Lang } from "@/lib/i18n";
 
-const prefectures = [
-  "北海道",
-  "青森県", "岩手県", "宮城県", "秋田県", "山形県", "福島県",
-  "茨城県", "栃木県", "群馬県", "埼玉県", "千葉県", "東京都", "神奈川県",
-  "新潟県", "富山県", "石川県", "福井県", "山梨県", "長野県", "岐阜県", "静岡県", "愛知県",
-  "三重県", "滋賀県", "京都府", "大阪府", "兵庫県", "奈良県", "和歌山県",
-  "鳥取県", "島根県", "岡山県", "広島県", "山口県",
-  "徳島県", "香川県", "愛媛県", "高知県",
-  "福岡県", "佐賀県", "長崎県", "熊本県", "大分県", "宮崎県", "鹿児島県", "沖縄県",
+const prefectures: { ja: string; en: string }[] = [
+  { ja: "北海道", en: "Hokkaido" },
+  { ja: "青森県", en: "Aomori" }, { ja: "岩手県", en: "Iwate" }, { ja: "宮城県", en: "Miyagi" }, { ja: "秋田県", en: "Akita" }, { ja: "山形県", en: "Yamagata" }, { ja: "福島県", en: "Fukushima" },
+  { ja: "茨城県", en: "Ibaraki" }, { ja: "栃木県", en: "Tochigi" }, { ja: "群馬県", en: "Gunma" }, { ja: "埼玉県", en: "Saitama" }, { ja: "千葉県", en: "Chiba" }, { ja: "東京都", en: "Tokyo" }, { ja: "神奈川県", en: "Kanagawa" },
+  { ja: "新潟県", en: "Niigata" }, { ja: "富山県", en: "Toyama" }, { ja: "石川県", en: "Ishikawa" }, { ja: "福井県", en: "Fukui" }, { ja: "山梨県", en: "Yamanashi" }, { ja: "長野県", en: "Nagano" }, { ja: "岐阜県", en: "Gifu" }, { ja: "静岡県", en: "Shizuoka" }, { ja: "愛知県", en: "Aichi" },
+  { ja: "三重県", en: "Mie" }, { ja: "滋賀県", en: "Shiga" }, { ja: "京都府", en: "Kyoto" }, { ja: "大阪府", en: "Osaka" }, { ja: "兵庫県", en: "Hyogo" }, { ja: "奈良県", en: "Nara" }, { ja: "和歌山県", en: "Wakayama" },
+  { ja: "鳥取県", en: "Tottori" }, { ja: "島根県", en: "Shimane" }, { ja: "岡山県", en: "Okayama" }, { ja: "広島県", en: "Hiroshima" }, { ja: "山口県", en: "Yamaguchi" },
+  { ja: "徳島県", en: "Tokushima" }, { ja: "香川県", en: "Kagawa" }, { ja: "愛媛県", en: "Ehime" }, { ja: "高知県", en: "Kochi" },
+  { ja: "福岡県", en: "Fukuoka" }, { ja: "佐賀県", en: "Saga" }, { ja: "長崎県", en: "Nagasaki" }, { ja: "熊本県", en: "Kumamoto" }, { ja: "大分県", en: "Oita" }, { ja: "宮崎県", en: "Miyazaki" }, { ja: "鹿児島県", en: "Kagoshima" }, { ja: "沖縄県", en: "Okinawa" },
 ];
 
-const contentCards: { icon: string; title: string; description: string; href: string; comingSoon?: boolean }[] = [
+const contentCards: { icon: string; title_ja: string; title_en: string; desc_ja: string; desc_en: string; href: string; comingSoon?: boolean }[] = [
   {
     icon: "🔥",
-    title: "グーサー(熱波師)一覧",
-    description: "全国の熱波師を探す",
+    title_ja: "アウフグーサー(熱波師)一覧",
+    title_en: "Aufgusser (Heat-Wave Master) List",
+    desc_ja: "全国の熱波師を探す",
+    desc_en: "Find aufguss masters across Japan",
     href: "/aufgusser",
   },
   {
     icon: "🌿",
-    title: "ウィスカー",
-    description: "ウィスキング体験を探す",
+    title_ja: "ウィスカー",
+    title_en: "Whisking Experience",
+    desc_ja: "ウィスキング体験を探す",
+    desc_en: "Find whisking experiences",
     href: "/whisker",
     comingSoon: true,
   },
   {
     icon: "📸",
-    title: "サウナ紹介インスタ一覧",
-    description: "サウナ系Instagramアカウント",
+    title_ja: "サウナ紹介インスタ一覧",
+    title_en: "Sauna Instagram Directory",
+    desc_ja: "サウナ系Instagramアカウント",
+    desc_en: "Curated sauna Instagram accounts",
     href: "/sauna-instagram",
     comingSoon: true,
   },
   {
     icon: "🛍️",
-    title: "サウナグッズ",
-    description: "おすすめサウナグッズ",
+    title_ja: "サウナグッズ",
+    title_en: "Sauna Goods",
+    desc_ja: "おすすめサウナグッズ",
+    desc_en: "Recommended sauna gear",
     href: "/goods",
   },
   {
     icon: "📖",
-    title: "サウナ用語辞典",
-    description: "サウナ用語を学ぶ",
+    title_ja: "サウナ用語辞典",
+    title_en: "Sauna Glossary",
+    desc_ja: "サウナ用語を学ぶ",
+    desc_en: "Learn sauna terminology",
     href: "/glossary",
   },
   {
     icon: "💪",
-    title: "サウナの健康効果",
-    description: "科学的に証明された効果",
+    title_ja: "サウナの健康効果",
+    title_en: "Health Benefits of Sauna",
+    desc_ja: "科学的に証明された効果",
+    desc_en: "Scientifically proven benefits",
     href: "/health",
   },
   {
     icon: "🔰",
-    title: "初心者ガイド",
-    description: "サウナの入り方",
+    title_ja: "初心者ガイド",
+    title_en: "Beginner's Guide",
+    desc_ja: "サウナの入り方",
+    desc_en: "How to enjoy a sauna",
     href: "/beginners",
   },
 ];
@@ -242,13 +256,13 @@ export default function HomePage() {
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-2">
           {prefectures.map((pref) => (
             <button
-              key={pref}
+              key={pref.ja}
               onClick={() =>
-                router.push(`/${lang}/sauna/${encodeURIComponent(pref)}`)
+                router.push(`/${lang}/sauna/${encodeURIComponent(pref.ja)}`)
               }
               className="bg-white/10 hover:bg-green-600 text-white text-sm md:text-lg py-2 md:py-3 px-3 rounded-lg transition-colors text-center"
             >
-              {pref}
+              {lang === "en" ? pref.en : pref.ja}
             </button>
           ))}
         </div>
@@ -262,7 +276,7 @@ export default function HomePage() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {contentCards.map((card) => (
             <a
-              key={card.title}
+              key={card.title_ja}
               href={card.comingSoon ? undefined : `/${lang}${card.href}`}
               onClick={
                 card.comingSoon ? (e: React.MouseEvent) => e.preventDefault() : undefined
@@ -280,9 +294,9 @@ export default function HomePage() {
               )}
               <span className="text-2xl">{card.icon}</span>
               <h3 className="text-sm font-bold text-white mt-2 mb-1">
-                {card.title}
+                {lang === "en" ? card.title_en : card.title_ja}
               </h3>
-              <p className="text-xs text-white/50">{card.description}</p>
+              <p className="text-xs text-white/50">{lang === "en" ? card.desc_en : card.desc_ja}</p>
             </a>
           ))}
         </div>
