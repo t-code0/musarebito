@@ -8,6 +8,8 @@ type Product = {
   name: string;
   category: string;
   description: string;
+  /** Amazon search keyword (overrides name for URL). */
+  keyword?: string;
 };
 
 const categories = [
@@ -44,29 +46,36 @@ const products: Product[] = [
   { name: "ヴィヒタエッセンス", category: "アロマオイル", description: "白樺ヴィヒタの香りを凝縮。お風呂に入れるだけで、湯船がフィンランドのレイクサイドになる。" },
   { name: "ロウリュ用アロマウォーター", category: "アロマオイル", description: "ストーンにそのままかけるだけ。ハーブブレンドの蒸気が広がり、サウナ室が天国に変わる瞬間。" },
   // サウナポンチョ
-  { name: "サウナポンチョ(フリーサイズ)", category: "サウナポンチョ", description: "外気浴の「あと一歩」を埋める最終兵器。さっと羽織れば冷えを防ぎ、ととのいが持続する。" },
+  { name: "サウナポンチョ フリーサイズ", category: "サウナポンチョ", description: "外気浴の「あと一歩」を埋める最終兵器。さっと羽織れば冷えを防ぎ、ととのいが持続する。", keyword: "サウナポンチョ フリーサイズ" },
   { name: "マイクロファイバーポンチョ", category: "サウナポンチョ", description: "驚きの軽さと速乾性。畳めばペットボトルサイズ、テントサウナ遠征のお供に。" },
   { name: "今治ポンチョ", category: "サウナポンチョ", description: "今治タオルの肌触りで全身を包む贅沢。吸水力も最高峰、外気浴が至福の時間になる。" },
   // ドリンク
-  { name: "オロポ(オロナミンC+ポカリ)", category: "ドリンク", description: "オロナミンC×ポカリスエット。サウナ後の至福の一杯、通称オロポ。これを飲むためにサウナに行く人、続出中。" },
-  { name: "Chill Cola（チルコーラ）", category: "ドリンク", description: "サウナ発のクラフトコーラ。天然スパイスとハーブが織りなす刺激と爽快感、サウナ後の新定番ドリンク。" },
-  { name: "Chill缶（チル缶）", category: "ドリンク", description: "サウナドリンクブランドChillの缶タイプ。キンキンに冷やして水風呂後に一気飲み、至福のととのいタイム。" },
-  { name: "オロナミンC", category: "ドリンク", description: "ビタミンC配合の元気ハツラツドリンク。オロポの片割れとしても、単体でもサウナ後の定番。" },
-  { name: "ポカリスエット", category: "ドリンク", description: "発汗で失われた水分・電解質を素早く補給。サウナ前後の水分補給の王道、医師も推奨する定番。" },
-  { name: "デカビタC", category: "ドリンク", description: "ビタミンC・ローヤルゼリー配合の炭酸栄養ドリンク。サウナ後のシャキッとした爽快感が癖になる。" },
-  { name: "VAAM（ヴァーム）", category: "ドリンク", description: "体脂肪を燃やすアミノ酸飲料。サウナ前に飲めば脂肪燃焼効率アップ、フィットネスサウナーの相棒。" },
-  { name: "OS-1（経口補水液）", category: "ドリンク", description: "医療現場でも使われる経口補水液。大量発汗後の電解質バランスを最速で回復、サウナの安全装置。" },
-  { name: "イオンウォーター", category: "ドリンク", description: "カロリー控えめなのに電解質しっかり補給。サウナ前後の水分チャージはこれ一択。" },
-  { name: "ヤクルト1000", category: "ドリンク", description: "乳酸菌シロタ株1000億個の腸活パワー。サウナ×ヤクルト1000で、ととのいの先へ。" },
+  { name: "オロポ", category: "ドリンク", description: "オロナミンC×ポカリスエット。サウナ後の至福の一杯、通称オロポ。これを飲むためにサウナに行く人、続出中。", keyword: "オロポ サウナ" },
+  { name: "チルコーラ", category: "ドリンク", description: "サウナ発のクラフトコーラ。天然スパイスとハーブが織りなす刺激と爽快感、サウナ後の新定番ドリンク。", keyword: "チルコーラ Chill Cola" },
+  { name: "チル缶", category: "ドリンク", description: "サウナドリンクブランドChillの缶タイプ。キンキンに冷やして水風呂後に一気飲み、至福のととのいタイム。", keyword: "チル缶 Chill" },
+  { name: "オロナミンC", category: "ドリンク", description: "ビタミンC配合の元気ハツラツドリンク。オロポの片割れとしても、単体でもサウナ後の定番。", keyword: "オロナミンC" },
+  { name: "ポカリスエット", category: "ドリンク", description: "発汗で失われた水分・電解質を素早く補給。サウナ前後の水分補給の王道、医師も推奨する定番。", keyword: "ポカリスエット" },
+  { name: "デカビタC", category: "ドリンク", description: "ビタミンC・ローヤルゼリー配合の炭酸栄養ドリンク。サウナ後のシャキッとした爽快感が癖になる。", keyword: "デカビタC" },
+  { name: "VAAM", category: "ドリンク", description: "体脂肪を燃やすアミノ酸飲料。サウナ前に飲めば脂肪燃焼効率アップ、フィットネスサウナーの相棒。", keyword: "VAAM ヴァーム" },
+  { name: "OS-1", category: "ドリンク", description: "医療現場でも使われる経口補水液。大量発汗後の電解質バランスを最速で回復、サウナの安全装置。", keyword: "OS-1 経口補水液" },
+  { name: "イオンウォーター", category: "ドリンク", description: "カロリー控えめなのに電解質しっかり補給。サウナ前後の水分チャージはこれ一択。", keyword: "イオンウォーター" },
+  { name: "ヤクルト1000", category: "ドリンク", description: "乳酸菌シロタ株1000億個の腸活パワー。サウナ×ヤクルト1000で、ととのいの先へ。", keyword: "ヤクルト1000" },
   // サウナ本・漫画
-  { name: "サ道(タナカカツキ)", category: "サウナ本・漫画", description: "サウナブームはここから始まった。読めばサウナの見え方が180度変わる、全サウナーのバイブル。" },
-  { name: "マンガ サ道(タナカカツキ)", category: "サウナ本・漫画", description: "ドラマ化もされた大人気コミック。笑えて、学べて、サウナに行きたくなる。未読は損。" },
+  { name: "サ道 タナカカツキ", category: "サウナ本・漫画", description: "サウナブームはここから始まった。読めばサウナの見え方が180度変わる、全サウナーのバイブル。", keyword: "サ道 タナカカツキ" },
+  { name: "マンガ サ道 タナカカツキ", category: "サウナ本・漫画", description: "ドラマ化もされた大人気コミック。笑えて、学べて、サウナに行きたくなる。未読は損。", keyword: "マンガ サ道" },
   { name: "サウナの教科書", category: "サウナ本・漫画", description: "「なぜととのうのか？」を科学で解き明かす一冊。正しい入り方を知れば、効果が倍になる。" },
   { name: "人生を変えるサウナ術", category: "サウナ本・漫画", description: "仕事の生産性を上げたいならサウナへ。ビジネスパーソン必読、サウナ×パフォーマンスの決定版。" },
   // サウナグッズ
   { name: "サウナウォッチ", category: "サウナグッズ", description: "耐熱・防水の12分計。時間を気にせず蒸されていた日々にサヨナラ。最適なセッション管理を。" },
   { name: "サウナメガネ曇り止め", category: "サウナグッズ", description: "塗るだけでサウナ室の視界クリア。メガネ勢の「何も見えない」問題、これで完全解決。" },
-  { name: "ヴィヒタ(白樺の束)", category: "サウナグッズ", description: "フィンランド直伝、白樺の若枝で身体を叩けば血行促進＆リラックス。本物のサウナ体験がここに。" },
+  { name: "ヴィヒタ 白樺の束", category: "サウナグッズ", description: "フィンランド直伝、白樺の若枝で身体を叩けば血行促進＆リラックス。本物のサウナ体験がここに。", keyword: "ヴィヒタ 白樺" },
+  { name: "サウナ用メガネ 曇らない", category: "サウナグッズ", description: "高温多湿のサウナ室でもレンズが曇らない専用設計。メガネ派サウナーの視界を完全に守る必需品。", keyword: "サウナメガネ 曇らない" },
+  { name: "ととのいチェア", category: "サウナグッズ", description: "外気浴の快適さを極限まで追求した専用リクライニングチェア。自宅でもキャンプでもととのいが再現できる。", keyword: "ととのいチェア" },
+  { name: "サウナストーン", category: "サウナグッズ", description: "ロウリュの蒸気を均一に広げる天然サウナストーン。自宅サウナやテントサウナの心臓部。", keyword: "サウナストーン" },
+  { name: "サウナ用スキンケア", category: "サウナグッズ", description: "サウナ前後の肌をケアする専用スキンケアセット。大量発汗で開いた毛穴を整え、美肌効果を最大化。", keyword: "サウナ スキンケア" },
+  { name: "防水イヤホン", category: "サウナグッズ", description: "IPX7以上の防水性能でサウナ室でも使える。好きな音楽やポッドキャストでととのい体験をアップグレード。", keyword: "防水イヤホン サウナ" },
+  { name: "ロウリュ用ハーブ", category: "サウナグッズ", description: "ストーンにかけるハーブブレンド。ユーカリ・白樺・ラベンダーの天然蒸気で、サウナ室が森になる。", keyword: "ロウリュ アロマ ハーブ" },
+  { name: "サウナ室温度計", category: "サウナグッズ", description: "120℃まで対応する耐熱仕様の温度計。自宅サウナやテントサウナの温度管理に必須のアイテム。", keyword: "サウナ 温度計 耐熱" },
 ];
 
 const categoryColors: Record<string, string> = {
@@ -91,12 +100,12 @@ const categoryGradients: Record<string, string> = {
   サウナグッズ: "linear-gradient(135deg, #06b6d4 0%, #0e7490 100%)",
 };
 
-function amazonUrl(name: string) {
-  return `https://www.amazon.co.jp/s?k=${encodeURIComponent(name)}&tag=trustcheck-22`;
+function amazonUrl(keyword: string) {
+  return `https://www.amazon.co.jp/s?k=${encodeURIComponent(keyword)}&tag=trustcheck-22`;
 }
 
-function rakutenUrl(name: string) {
-  return `https://hb.afl.rakuten.co.jp/hgc/5225c217.0725d77e.5225c218.5705d87b/?pc=https://search.rakuten.co.jp/search/mall/${encodeURIComponent(name)}/`;
+function rakutenUrl(keyword: string) {
+  return `https://hb.afl.rakuten.co.jp/hgc/5225c217.0725d77e.5225c218.5705d87b/?pc=https://search.rakuten.co.jp/search/mall/${encodeURIComponent(keyword)}/`;
 }
 
 export default function GoodsPage() {
@@ -255,7 +264,7 @@ export default function GoodsPage() {
                 </p>
                 <div className="flex gap-2">
                   <a
-                    href={amazonUrl(product.name)}
+                    href={amazonUrl(product.keyword || product.name)}
                     target="_blank"
                     rel="nofollow sponsored noopener noreferrer"
                     className="flex-1 text-center bg-[#ff9900] text-white font-bold py-2.5 rounded-lg text-sm min-h-[44px] flex items-center justify-center hover:bg-[#e68a00] transition-colors"
@@ -263,7 +272,7 @@ export default function GoodsPage() {
                     Amazonで見る
                   </a>
                   <a
-                    href={rakutenUrl(product.name)}
+                    href={rakutenUrl(product.keyword || product.name)}
                     target="_blank"
                     rel="nofollow sponsored noopener noreferrer"
                     className="flex-1 text-center bg-red-600 text-white font-bold py-2.5 rounded-lg text-sm min-h-[44px] flex items-center justify-center hover:bg-red-700 transition-colors"

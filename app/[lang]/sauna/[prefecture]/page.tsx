@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 import SaunaCard from "@/components/SaunaCard";
 import AdSlot from "@/components/AdSlot";
 import { Sauna } from "@/types/sauna";
-import { t, normalizeLang, type Lang } from "@/lib/i18n";
+import { t, normalizeLang, prefEn, cityRomaji, type Lang } from "@/lib/i18n";
 
 type SortKey = "score" | "rating" | "newest";
 
@@ -112,7 +112,7 @@ export default function PrefecturePage() {
           {lang === "en" ? "← Back to home" : "← トップに戻る"}
         </a>
         <h1 className="text-3xl font-bold text-white">
-          {lang === "en" ? `Saunas in ${prefecture}` : `${prefecture}のサウナ`}
+          {lang === "en" ? `Saunas in ${prefEn(prefecture)}` : `${prefecture}のサウナ`}
         </h1>
       </div>
 
@@ -197,7 +197,7 @@ export default function PrefecturePage() {
                       <span key={city} className="contents">
                         {showArea && (
                           <span className="shrink-0 text-[10px] text-red-400/60 self-center px-1 font-bold">
-                            {area}
+                            {lang === "en" ? ({ "道央": "Central", "道北": "North", "道東": "East", "道南": "South", "その他": "Other" }[area] || area) : area}
                           </span>
                         )}
                         <button
@@ -208,7 +208,7 @@ export default function PrefecturePage() {
                               : "bg-red-900/50 text-red-200 border border-red-800/50"
                           }`}
                         >
-                          {city}({count})
+                          {lang === "en" ? cityRomaji(city) : city}({count})
                         </button>
                       </span>
                     );

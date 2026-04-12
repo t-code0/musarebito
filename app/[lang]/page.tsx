@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams, usePathname } from "next/navigation";
 import SaunaGoods from "@/components/SaunaGoods";
-import { t, normalizeLang, type Lang } from "@/lib/i18n";
+import { t, normalizeLang, prefEn, type Lang } from "@/lib/i18n";
 
 const prefectures: { ja: string; en: string }[] = [
   { ja: "北海道", en: "Hokkaido" },
@@ -406,7 +406,7 @@ export default function HomePage() {
                   )}
                   {sauna.honmono_score && (
                     <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-sm text-white font-bold text-sm px-3 py-1 rounded-full border border-white/20">
-                      {sauna.honmono_score}点
+                      {sauna.honmono_score}{lang === "en" ? " pts" : "点"}
                     </div>
                   )}
                 </div>
@@ -415,7 +415,7 @@ export default function HomePage() {
                   <h3 className="text-lg font-bold text-white mb-1">
                     {sauna.name}
                   </h3>
-                  <p className="text-xs text-green-300/70 mb-2">{sauna.prefecture}</p>
+                  <p className="text-xs text-green-300/70 mb-2">{lang === "en" ? prefEn(sauna.prefecture) : sauna.prefecture}</p>
                   {sauna.score_detail?.explanation && (
                     <p className="text-sm text-white/60 line-clamp-2">
                       {sauna.score_detail.explanation}

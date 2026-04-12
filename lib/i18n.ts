@@ -165,3 +165,67 @@ export function withLang(lang: Lang, path: string): string {
   const trimmed = path.startsWith("/") ? path.slice(1) : path;
   return `/${lang}/${trimmed}`;
 }
+
+/** Prefecture ja → en mapping */
+const PREF_EN: Record<string, string> = {
+  "北海道": "Hokkaido",
+  "青森県": "Aomori", "岩手県": "Iwate", "宮城県": "Miyagi", "秋田県": "Akita", "山形県": "Yamagata", "福島県": "Fukushima",
+  "茨城県": "Ibaraki", "栃木県": "Tochigi", "群馬県": "Gunma", "埼玉県": "Saitama", "千葉県": "Chiba", "東京都": "Tokyo", "神奈川県": "Kanagawa",
+  "新潟県": "Niigata", "富山県": "Toyama", "石川県": "Ishikawa", "福井県": "Fukui", "山梨県": "Yamanashi", "長野県": "Nagano", "岐阜県": "Gifu", "静岡県": "Shizuoka", "愛知県": "Aichi",
+  "三重県": "Mie", "滋賀県": "Shiga", "京都府": "Kyoto", "大阪府": "Osaka", "兵庫県": "Hyogo", "奈良県": "Nara", "和歌山県": "Wakayama",
+  "鳥取県": "Tottori", "島根県": "Shimane", "岡山県": "Okayama", "広島県": "Hiroshima", "山口県": "Yamaguchi",
+  "徳島県": "Tokushima", "香川県": "Kagawa", "愛媛県": "Ehime", "高知県": "Kochi",
+  "福岡県": "Fukuoka", "佐賀県": "Saga", "長崎県": "Nagasaki", "熊本県": "Kumamoto", "大分県": "Oita", "宮崎県": "Miyazaki", "鹿児島県": "Kagoshima", "沖縄県": "Okinawa",
+};
+
+/** Translate prefecture name to English. Falls back to original. */
+export function prefEn(ja: string): string {
+  return PREF_EN[ja] || ja;
+}
+
+/** Romanize a Japanese city name (strip 市/区/町/村/郡 suffix, use wapuro). */
+export function cityRomaji(city: string): string {
+  // Common city mappings for major cities
+  const CITY_MAP: Record<string, string> = {
+    "札幌市": "Sapporo", "千歳市": "Chitose", "恵庭市": "Eniwa", "北広島市": "Kitahiroshima",
+    "江別市": "Ebetsu", "小樽市": "Otaru", "石狩市": "Ishikari", "岩見沢市": "Iwamizawa",
+    "旭川市": "Asahikawa", "帯広市": "Obihiro", "釧路市": "Kushiro", "北見市": "Kitami",
+    "網走市": "Abashiri", "函館市": "Hakodate", "登別市": "Noboribetsu", "室蘭市": "Muroran",
+    "富良野市": "Furano", "北斗市": "Hokuto",
+    "横浜市": "Yokohama", "川崎市": "Kawasaki", "相模原市": "Sagamihara", "藤沢市": "Fujisawa",
+    "新宿区": "Shinjuku", "渋谷区": "Shibuya", "港区": "Minato", "千代田区": "Chiyoda",
+    "中央区": "Chuo", "台東区": "Taito", "墨田区": "Sumida", "江東区": "Koto",
+    "品川区": "Shinagawa", "目黒区": "Meguro", "大田区": "Ota", "世田谷区": "Setagaya",
+    "中野区": "Nakano", "杉並区": "Suginami", "豊島区": "Toshima", "北区": "Kita",
+    "荒川区": "Arakawa", "板橋区": "Itabashi", "練馬区": "Nerima", "足立区": "Adachi",
+    "葛飾区": "Katsushika", "江戸川区": "Edogawa", "文京区": "Bunkyo",
+    "名古屋市": "Nagoya", "豊田市": "Toyota", "岡崎市": "Okazaki", "一宮市": "Ichinomiya",
+    "大阪市": "Osaka", "堺市": "Sakai", "東大阪市": "Higashiosaka", "豊中市": "Toyonaka",
+    "吹田市": "Suita", "高槻市": "Takatsuki", "枚方市": "Hirakata",
+    "神戸市": "Kobe", "姫路市": "Himeji", "西宮市": "Nishinomiya", "尼崎市": "Amagasaki",
+    "京都市": "Kyoto", "宇治市": "Uji",
+    "福岡市": "Fukuoka", "北九州市": "Kitakyushu", "久留米市": "Kurume",
+    "広島市": "Hiroshima", "福山市": "Fukuyama",
+    "仙台市": "Sendai", "盛岡市": "Morioka", "秋田市": "Akita", "山形市": "Yamagata",
+    "福島市": "Fukushima", "郡山市": "Koriyama", "いわき市": "Iwaki",
+    "水戸市": "Mito", "つくば市": "Tsukuba", "宇都宮市": "Utsunomiya",
+    "前橋市": "Maebashi", "高崎市": "Takasaki",
+    "さいたま市": "Saitama", "川越市": "Kawagoe", "川口市": "Kawaguchi", "所沢市": "Tokorozawa",
+    "千葉市": "Chiba", "船橋市": "Funabashi", "松戸市": "Matsudo", "柏市": "Kashiwa", "市川市": "Ichikawa",
+    "八王子市": "Hachioji", "町田市": "Machida", "府中市": "Fuchu", "立川市": "Tachikawa", "武蔵野市": "Musashino", "三鷹市": "Mitaka",
+    "新潟市": "Niigata", "長岡市": "Nagaoka",
+    "富山市": "Toyama", "金沢市": "Kanazawa", "福井市": "Fukui",
+    "甲府市": "Kofu", "長野市": "Nagano", "松本市": "Matsumoto",
+    "岐阜市": "Gifu", "大垣市": "Ogaki", "各務原市": "Kakamigahara", "多治見市": "Tajimi",
+    "静岡市": "Shizuoka", "浜松市": "Hamamatsu", "沼津市": "Numazu", "熱海市": "Atami",
+    "津市": "Tsu", "四日市市": "Yokkaichi",
+    "大津市": "Otsu",
+    "奈良市": "Nara", "和歌山市": "Wakayama",
+    "鳥取市": "Tottori", "松江市": "Matsue", "岡山市": "Okayama", "倉敷市": "Kurashiki",
+    "山口市": "Yamaguchi", "下関市": "Shimonoseki",
+    "徳島市": "Tokushima", "高松市": "Takamatsu", "松山市": "Matsuyama", "高知市": "Kochi",
+    "佐賀市": "Saga", "長崎市": "Nagasaki", "熊本市": "Kumamoto", "大分市": "Oita", "別府市": "Beppu",
+    "宮崎市": "Miyazaki", "鹿児島市": "Kagoshima", "那覇市": "Naha",
+  };
+  return CITY_MAP[city] || city;
+}
