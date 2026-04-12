@@ -12,6 +12,7 @@
  *   - https://find-model.jp/insta-lab/sns-sauna-influencer/
  *   - https://beaus.net/note/2602/
  *   - https://news.infrect.com/saunakei/
+ *   - https://find-model.jp/insta-lab/instagram-account-sauna-company/
  *   - https://saunaandco.com/2022/01/19/sauna-goods-brand/
  *   - Direct creator instagram.com profile pages
  */
@@ -50,7 +51,7 @@ export const CATEGORY_EMOJI: Record<InstagramCategory, string> = {
  * 34 verified Japanese sauna Instagram accounts (no facility accounts).
  */
 export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
-  // ===== Category 1: サウナレビュー系インフルエンサー (9) =====
+  // ===== Category 1: サウナレビュー系インフルエンサー (10) =====
   {
     handle: "totonoeoyakata",
     name: "松尾大 ととのえ親方",
@@ -58,15 +59,45 @@ export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
     category: "review",
   },
   {
-    handle: "yuu_saunner",
-    name: "ゆう｜関東サウナ",
-    description: "1分で行きたくなる関東サウナを発信する人気リール投稿者",
+    handle: "saunashisho",
+    name: "サウナ師匠 秋山大輔",
+    description: "TTNE所属のプロサウナー、HARVIAグローバルサウナアンバサダー",
     category: "review",
   },
   {
-    handle: "saunaand_",
-    name: "SAUNA & co.",
-    description: "サウナライフスタイル情報を発信するメディアブランド",
+    handle: "magmanpei37",
+    name: "マグ万平",
+    description: "「のちほどサウナで」MCの世界中のサウナを巡る芸人サウナー",
+    category: "review",
+  },
+  {
+    handle: "sauna_ao",
+    name: "あおサウナ",
+    description: "ショート動画でサウナ施設やサウナ飯を紹介する看護師サウナー",
+    category: "review",
+  },
+  {
+    handle: "yuu_saunner",
+    name: "ゆう｜関東サウナ",
+    description: "1分で行きたくなる関東サウナを発信、年間100施設巡るリール投稿者",
+    category: "review",
+  },
+  {
+    handle: "kencho0113",
+    name: "さとーけんちょ",
+    description: "全47都道府県・462施設を巡るフォトグラファー系サウナレビュアー",
+    category: "review",
+  },
+  {
+    handle: "takeru19950801",
+    name: "伊藤猛",
+    description: "プロマジシャン兼サウナ・旅行・グルメ系インフルエンサー",
+    category: "review",
+  },
+  {
+    handle: "saunaboys_official",
+    name: "サウナ男子｜チル・サ活",
+    description: "年間300日以上サウナに通い毎日18時にサウナ情報を発信",
     category: "review",
   },
   {
@@ -76,33 +107,9 @@ export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
     category: "review",
   },
   {
-    handle: "sauna_en",
-    name: "sauna en",
-    description: "全国のサウナを旅する人気サウナレビューアカウント",
-    category: "review",
-  },
-  {
-    handle: "saunaou",
-    name: "サウナ王",
-    description: "サウナ王として知られるサウナ情報発信インフルエンサー",
-    category: "review",
-  },
-  {
     handle: "sauna_sisu_",
     name: "サウナまとめ日誌 SISU",
-    description: "国内最大級のサウナ情報メディア、厳選施設をまとめて紹介",
-    category: "review",
-  },
-  {
-    handle: "kencho0113",
-    name: "佐藤健長｜サウナインフルエンサー",
-    description: "サウナ・旅行・グルメを発信する人気インフルエンサー",
-    category: "review",
-  },
-  {
-    handle: "takeru19950801",
-    name: "伊藤猛｜サウナ×マジシャン",
-    description: "プロマジシャン×サウナ好き、旅とサウナとグルメを発信",
+    description: "温度・席数・混雑度を紹介する国内最大級サウナ情報メディア",
     category: "review",
   },
 
@@ -132,31 +139,31 @@ export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
     category: "brand",
   },
   {
+    handle: "weekly_sauna_boy",
+    name: "サウナボーイ",
+    description: "2018年結成の匿名クリエイティブ集団によるサウナカルチャーブランド",
+    category: "brand",
+  },
+  {
     handle: "saunachelin_official",
     name: "SAUNACHELIN",
     description: "毎年11月11日に発表される国内最大のサウナアワード",
     category: "brand",
   },
   {
-    handle: "saunacamp",
-    name: "Sauna Camp.",
-    description: "MORZH正規代理店、日本アウトドアサウナの先駆者",
+    handle: "and_sauna",
+    name: "アンドサウナ",
+    description: "YouTubeとInstagramでサウナ文化を発信するサウナメディア",
     category: "brand",
   },
   {
-    handle: "weekly_sauna_boy",
-    name: "サウナボーイ",
-    description: "裸の付き合いをテーマにしたサウナカルチャーブランド",
-    category: "brand",
-  },
-  {
-    handle: "sauna.totonou",
-    name: "サウナトトノウ",
-    description: "月間200万人が閲覧するオリジナルサウナメディア",
+    handle: "saunaselect",
+    name: "サウナセレクト by TTNE",
+    description: "世界中のサウナグッズを厳選して紹介するTTNE運営のECサイト",
     category: "brand",
   },
 
-  // ===== Category 3: サウナ女子系 (9) =====
+  // ===== Category 3: サウナ女子系 (8) =====
   {
     handle: "saunajoshi",
     name: "サウナ女子（サ女子）",
@@ -166,31 +173,31 @@ export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
   {
     handle: "rui_chillsauna",
     name: "るい｜サウナと旅の記録",
-    description: "女性向けサウナメディアchillsauna運営のサウナ女子",
+    description: "女性向けサウナメディアchillsauna運営のサウナスパプロフェッショナル",
     category: "female",
   },
   {
     handle: "moka_030n",
     name: "野添百華",
-    description: "フォロワー6万超、Netflix出演歴もあるサウナタレント・モデル",
+    description: "Netflix出演経験もあるサウナタレント・フリーランスモデル",
+    category: "female",
+  },
+  {
+    handle: "manatmnt0116",
+    name: "真奈",
+    description: "チバテレ「むちむちサウナ」出演のサウナタレント",
     category: "female",
   },
   {
     handle: "saori.kurosu",
-    name: "Saori｜サウナ&ゴルフ女子",
-    description: "サウナ・スパプロフェッショナル資格保持、フォロワー3万超の人気サウナ女子",
+    name: "さおり｜サウナゴルフ女子",
+    description: "サウナスパプロフェッショナル資格を持つサウナ＆ゴルフ女子",
     category: "female",
   },
   {
     handle: "mirai_sauna",
-    name: "Mirai｜サウナ女子×熱波師",
-    description: "サウナ女子でありながら熱波師としても活動するインフルエンサー",
-    category: "female",
-  },
-  {
-    handle: "saunagirl_momochan",
-    name: "サウナガールももちゃん",
-    description: "関西中心に銭湯・サウナを紹介する大阪サウナ女子",
+    name: "Mirai｜サウナ女子＆熱波師",
+    description: "サウナ女子かつ熱波師として活動する女性サウナインフルエンサー",
     category: "female",
   },
   {
@@ -200,15 +207,9 @@ export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
     category: "female",
   },
   {
-    handle: "hokkaidosauna.yuki",
-    name: "北海道サウナ YUKI",
-    description: "北海道のサウナ情報を発信する女性サウナー",
-    category: "female",
-  },
-  {
-    handle: "sauna.girl.totonoi",
-    name: "福岡サウナ女子ととのいちゃん",
-    description: "九州のサウナ・温泉情報を発信する福岡サウナ女子",
+    handle: "yun__saunatime",
+    name: "ゆん｜大人女子のサウナ探し",
+    description: "都内中心に本音レビューを発信、サウナアパレルyunikka運営",
     category: "female",
   },
 
@@ -216,49 +217,49 @@ export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
   {
     handle: "tokio_sauvenir",
     name: "SAUVENIR（サウベニア）",
-    description: "サウナ土産をコンセプトにしたサウナグッズ専業ブランド",
-    category: "goods",
-  },
-  {
-    handle: "harinezumi_official",
-    name: "HARINEZUMI",
-    description: "現役サウナーが作るサウナ＆アウトドア向けアパレルブランド",
-    category: "goods",
-  },
-  {
-    handle: "abil_japan",
-    name: "ABiL（アビル）",
-    description: "サウナハット・サウナウェアを手がけるサウナ特化アパレルブランド",
+    description: "サウナ室でもおしゃれしたい人向けサウナグッズ専業ブランド",
     category: "goods",
   },
   {
     handle: "totonoi_japan",
     name: "Totonoi Japan",
-    description: "日本初のバケットハット型タオルサウナハットを販売するブランド",
+    description: "日本初バケットハット型タオルサウナハットを販売するブランド",
     category: "goods",
   },
   {
-    handle: "totonou_jp",
-    name: "totonoü（トトノウ）",
-    description: "エストニア発の北欧サウナ文化を日本に届けるサウナブランド",
+    handle: "saunanova_japan",
+    name: "SAUNA NOVA",
+    description: "累計2万個突破のサウナハットブランド、ととのえ先生監修",
     category: "goods",
   },
   {
-    handle: "saunizm696",
-    name: "saunizm（サウニズム）",
-    description: "サウナ好きによるサウナ好きのためのサウナグッズ専門ブランド",
+    handle: "abil_japan",
+    name: "ABiL（アビル）",
+    description: "新潟発のサウナブランド、kontexコラボのサウナハットも人気",
     category: "goods",
   },
   {
-    handle: "saunival",
-    name: "SAUNIVAL",
-    description: "サウナ好きママ向けサウナアパレルブランド",
+    handle: "kontex_official",
+    name: "コンテックス",
+    description: "MOKUタオルで知られる1934年創業の今治タオルメーカー",
     category: "goods",
   },
   {
-    handle: "sauna_brand",
-    name: "SAUNA（サウナブランド）",
-    description: "サウナライフスタイルをテーマにしたアパレル・グッズブランド",
+    handle: "samomo_omotesando",
+    name: "samomo 表参道",
+    description: "日本初のサウナグッズ専門セレクトショップ",
+    category: "goods",
+  },
+  {
+    handle: "saunaandco",
+    name: "SAUNA&co.",
+    description: "サウナグッズ製作・サウナライフ提案ブランド（大阪発）",
+    category: "goods",
+  },
+  {
+    handle: "saunacamp",
+    name: "Sauna Camp.",
+    description: "MORZH正規代理店、テントサウナ・アウトドアサウナグッズ販売",
     category: "goods",
   },
 ];
