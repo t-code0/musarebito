@@ -1,0 +1,28 @@
+# ムサレビト - HONMONO Sauna Guide
+> 全国サウナ施設をGoogle Maps連携で自動収集。AI要約・本物スコア・口コミをまとめたサウナ情報サイト。
+
+## Brand
+HONMONO — 本当に良いものだけを選ぶプラットフォーム
+
+## About ムサレビト
+ムサレビトは全国のサウナ施設をGoogle Maps連携で自動収集するサウナ情報サービスです。
+AIが口コミを要約し、独自の本物スコアで施設を評価します。
+サウナ初心者からサウナーまで、本当に良いサウナ施設を見つけるためのガイドです。
+
+## Tech Stack
+- Next.js 14 (App Router)
+- Supabase (PostgreSQL)
+- Claude API (AI Analysis)
+- Vercel (Hosting)
+- Google Maps API
+
+## Content Features
+- Google Maps連携による施設自動収集
+- AI口コミ要約（Claude API）
+- 本物スコアによる施設評価
+- 都道府県別サウナ検索
+- UGC口コミ・レビュー集約
+- 日本語特化のサウナデータベース
+
+## URL
+https://musarebito.vercel.app
