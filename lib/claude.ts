@@ -321,6 +321,7 @@ export function calculateHonmonoScoreLocal(input: {
   if (perf) {
     if (perf.count >= 10) heatPerf = 6;
     else if (perf.count >= 5) heatPerf = 3;
+    else if (perf.count >= 2) heatPerf = 2;
   }
   let heat = Math.min(heatBase + heatFacts + heatPerf, 17);
   const heatFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 5 : 3) : 0;
@@ -357,6 +358,7 @@ export function calculateHonmonoScoreLocal(input: {
   if (facts && facts.has_outside_air === true) outFacts = 5;
   let outPerf = 0;
   if (perf && perf.count >= 5) outPerf = 2;
+  else if (perf && perf.count >= 2) outPerf = 1;
   let outdoor = Math.min(outBase + outFacts + outPerf, 17);
   const outFloor = hasSignal ? 2 : 0;
   outdoor = Math.max(outdoor, outFloor);
@@ -377,6 +379,7 @@ export function calculateHonmonoScoreLocal(input: {
   let cleanPerf = 0;
   if (perf && perf.count >= 10) cleanPerf = 3;
   else if (perf && perf.count >= 5) cleanPerf = 2;
+  else if (perf && perf.count >= 2) cleanPerf = 1;
   let clean = Math.min(cleanBase + cleanPerf, 17);
   const cleanFloor = hasSignal ? 3 : 0;
   clean = Math.max(clean, cleanFloor);
@@ -394,6 +397,7 @@ export function calculateHonmonoScoreLocal(input: {
   }
   let aromaPerf = 0;
   if (perf && perf.count >= 5) aromaPerf = 4;
+  else if (perf && perf.count >= 2) aromaPerf = 2;
   let aroma = Math.min(aromaBase + aromaFacts + aromaPerf, 17);
   const aromaFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 5 : 3) : 0;
   aroma = Math.max(aroma, aromaFloor);
@@ -414,6 +418,7 @@ export function calculateHonmonoScoreLocal(input: {
   let focusPerf = 0;
   if (perf) {
     if (perf.count >= 5) focusPerf += 4;
+    else if (perf.count >= 2) focusPerf += 2;
     if (perf.hasLeaderOrOwner) focusPerf += 2;
   }
   let focus = Math.min(focusBase + focusFacts + focusPerf, 17);
