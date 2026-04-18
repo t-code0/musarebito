@@ -132,24 +132,22 @@ export default function HomePage() {
       {/* Hero */}
       <div className="flex flex-col items-center justify-center px-4 pt-12 md:pt-20 pb-12 md:pb-16">
         {/* Language switcher */}
-        <div className="absolute top-4 right-4 flex gap-1 bg-white/10 backdrop-blur rounded-full p-1 border border-white/20">
+        <div className="absolute top-4 right-4 flex bg-white/10 backdrop-blur rounded-full p-0.5 border border-white/20">
           <button
             onClick={() => switchLang("ja")}
-            className={`min-w-[44px] h-11 px-3 rounded-full text-base font-medium transition ${
-              lang === "ja" ? "bg-[#D97706] text-white" : "text-white/70 hover:text-white"
+            className={`px-3 py-1.5 rounded-full text-sm font-bold transition ${
+              lang === "ja" ? "bg-[#1B4332] text-white" : "text-white/50 hover:text-white"
             }`}
-            aria-label={t("language_japanese", lang)}
           >
-            🇯🇵 JA
+            JA
           </button>
           <button
             onClick={() => switchLang("en")}
-            className={`min-w-[44px] h-11 px-3 rounded-full text-base font-medium transition ${
-              lang === "en" ? "bg-[#D97706] text-white" : "text-white/70 hover:text-white"
+            className={`px-3 py-1.5 rounded-full text-sm font-bold transition ${
+              lang === "en" ? "bg-[#1B4332] text-white" : "text-white/50 hover:text-white"
             }`}
-            aria-label={t("language_english", lang)}
           >
-            🇬🇧 EN
+            EN
           </button>
         </div>
 
