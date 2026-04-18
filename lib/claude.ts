@@ -355,7 +355,9 @@ export function calculateHonmonoScoreLocal(input: {
   outBase += Math.min(countKw(outKw) * 2, 4);
   let outFacts = 0;
   if (facts && facts.has_outside_air === true) outFacts = 5;
-  let outdoor = Math.min(outBase + outFacts, 17);
+  let outPerf = 0;
+  if (perf && perf.count >= 5) outPerf = 2;
+  let outdoor = Math.min(outBase + outFacts + outPerf, 17);
   const outFloor = hasSignal ? 2 : 0;
   outdoor = Math.max(outdoor, outFloor);
 
@@ -373,7 +375,8 @@ export function calculateHonmonoScoreLocal(input: {
   const cleanKw = ["清潔","きれい","綺麗","清掃","掃除"];
   cleanBase += Math.min(Math.floor(countKw(cleanKw) * 1.5), 3);
   let cleanPerf = 0;
-  if (perf && perf.count >= 10) cleanPerf = 2;
+  if (perf && perf.count >= 10) cleanPerf = 3;
+  else if (perf && perf.count >= 5) cleanPerf = 2;
   let clean = Math.min(cleanBase + cleanPerf, 17);
   const cleanFloor = hasSignal ? 3 : 0;
   clean = Math.max(clean, cleanFloor);
@@ -426,7 +429,7 @@ export function calculateHonmonoScoreLocal(input: {
   const debug: CategoryBreakdown = {
     heat_quality: { base: heatBase, facts: heatFacts, performer: heatPerf, floor: heatFloor, final: heat },
     water_bath: { base: coldBase, facts: coldFacts, performer: 0, floor: coldFloor, final: cold },
-    outside_air: { base: outBase, facts: outFacts, performer: 0, floor: outFloor, final: outdoor },
+    outside_air: { base: outBase, facts: outFacts, performer: outPerf, floor: outFloor, final: outdoor },
     cleanliness: { base: cleanBase, facts: 0, performer: cleanPerf, floor: cleanFloor, final: clean },
     authenticity: { base: aromaBase, facts: aromaFacts, performer: aromaPerf, floor: aromaFloor, final: aroma },
     sauna_focus: { base: focusBase, facts: focusFacts, performer: focusPerf, floor: focusFloor, final: focus },
