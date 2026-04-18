@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase as getServiceClient } from "@/lib/supabase";
-import { calculateHonmonoScoreLocal } from "@/lib/claude";
+import { calculateHonmonoScoreLocal, SCORE_VERSION } from "@/lib/claude";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +11,6 @@ export async function GET(
   const sb = getServiceClient();
 
   // Fast DB read (parallel) — no Places API, no Claude API.
-  // Heavy work is delegated to /api/sauna/refresh/[id], called by the client.
   const [saunaResult, reviewsResult] = await Promise.all([
     sb.from("saunas").select("*").eq("id", params.id).single(),
     sb
@@ -27,17 +26,43 @@ export async function GET(
 
   const sauna = saunaResult.data;
 
-  // Compute score immediately if missing — pure DB-driven, no Claude API needed.
-  // This guarantees the score is always present in the response.
-  if (sauna.honmono_score == null) {
+  // Score v2: recalculate if missing or outdated version
+  const prevDetail = (sauna.score_detail as Record<string, unknown> | null) || null;
+  const prevVersion = prevDetail?.score_version as number | undefined;
+  const needsRescore = sauna.honmono_score == null || prevVersion !== SCORE_VERSION;
+
+  if (needsRescore) {
     try {
       const gReviews = sauna.google_reviews as { text: string }[] | null;
-      const reviewTexts = (gReviews || [])
-        .map((r) => r.text)
-        .filter(Boolean);
-      const prevDetail = (sauna.score_detail as Record<string, unknown> | null) || null;
+      const reviewTexts = (gReviews || []).map((r) => r.text).filter(Boolean);
       const savedRc = prevDetail?.review_count as number | undefined;
       const rc = savedRc || gReviews?.length || 0;
+
+      // Lookup performer count for this facility (by name match)
+      let perfCount = 0;
+      let hasLeader = false;
+      try {
+        const { data: perfData } = await sb
+          .from("sauna_performers")
+          .select("name,description,facilities")
+          .eq("type", "aufgusser");
+        if (perfData) {
+          const saunaName = sauna.name;
+          const matched = perfData.filter((p: Record<string, unknown>) => {
+            const facs = p.facilities as string[] | null;
+            if (facs && facs.length > 0) return facs.some((f: string) => f === saunaName || saunaName.includes(f) || f.includes(saunaName));
+            return false;
+          });
+          perfCount = matched.length;
+          hasLeader = matched.some((p: Record<string, unknown>) => {
+            const desc = (p.description as string) || "";
+            return /リーダー|オーナー|代表|隊長|チーフ/.test(desc);
+          });
+        }
+      } catch { /* performer lookup is best-effort */ }
+
+      const facilityFacts = prevDetail?.facility_facts as { sauna_temp_c: number | null; water_bath_temp_c: number | null; has_outside_air: boolean | null; loyly_type: string | null } | null;
+
       const { score: scoreVal } = calculateHonmonoScoreLocal({
         name: sauna.name,
         rating: sauna.rating,
@@ -46,23 +71,24 @@ export async function GET(
         reviews: reviewTexts,
         websiteContent: "",
         aiSummary: sauna.ai_summary || "",
+        facilityFacts,
+        performerBonus: perfCount > 0 ? { count: perfCount, hasLeaderOrOwner: hasLeader } : null,
       });
       (scoreVal as Record<string, unknown>).review_count = rc;
-      // Preserve facility_facts from previous score_detail, if any
+      (scoreVal as Record<string, unknown>).score_version = SCORE_VERSION;
       if (prevDetail?.facility_facts) {
         (scoreVal as Record<string, unknown>).facility_facts = prevDetail.facility_facts;
       }
+      if (prevDetail?.ai_summary_en) {
+        (scoreVal as Record<string, unknown>).ai_summary_en = prevDetail.ai_summary_en;
+      }
       sauna.honmono_score = scoreVal.overall;
       sauna.score_detail = scoreVal;
-      // Persist (fire-and-forget — don't block the response on this)
-      sb
-        .from("saunas")
-        .update({
-          honmono_score: scoreVal.overall,
-          score_detail: scoreVal,
-        })
-        .eq("id", sauna.id)
-        .then(() => {});
+      // Persist (fire-and-forget)
+      sb.from("saunas").update({
+        honmono_score: scoreVal.overall,
+        score_detail: scoreVal,
+      }).eq("id", sauna.id).then(() => {});
     } catch (e) {
       console.error("Inline score calc error:", e);
     }

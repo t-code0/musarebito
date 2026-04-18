@@ -42,27 +42,16 @@ function getRank(score: number, lang: Lang): { rank: string; label: string } {
 }
 
 /** Convert 6-category score to display 6×/17 format */
-function toDisplay6(detail: ScoreDetail, overall: number): number[] {
-  // Internal keys: outside_air=visit(18), water_bath=quality(18), heat_quality=sauna(18),
-  //   cleanliness=trust(10), authenticity=aroma(18), facility(18) = total 100
-  const raw = [
-    ((detail.heat_quality as number) || 0) / 18, // sauna → 熱の質
-    ((detail.water_bath as number) || 0) / 18,    // quality → 水風呂
-    ((detail.outside_air as number) || 0) / 18,   // visit → 外気浴
-    ((detail.cleanliness as number) || 0) / 10,   // trust → 清潔感
-    ((detail.authenticity as number) || 0) / 18,  // aroma → アロマ
-    ((detail.facility as number) || 0) / 18,      // facility → サウナ特化度
+function toDisplay6(detail: ScoreDetail): number[] {
+  // v2: all categories are already 0-17 internally
+  return [
+    Math.min((detail.heat_quality as number) || 0, 17),
+    Math.min((detail.water_bath as number) || 0, 17),
+    Math.min((detail.outside_air as number) || 0, 17),
+    Math.min((detail.cleanliness as number) || 0, 17),
+    Math.min((detail.authenticity as number) || 0, 17),
+    Math.min((detail.facility as number) || 0, 17),
   ];
-
-  const values = raw.map(r => Math.round(r * 17));
-
-  // Adjust sum to match overall
-  const sum = values.reduce((a, b) => a + b, 0);
-  const diff = overall - sum;
-  if (diff > 0 && values[0] < 17) values[0] = Math.min(values[0] + diff, 17);
-  else if (diff < 0 && values[3] > 0) values[3] = Math.max(values[3] + diff, 0);
-
-  return values;
 }
 
 export default function HonmonoScore({ score, detail }: Props) {
@@ -84,7 +73,7 @@ export default function HonmonoScore({ score, detail }: Props) {
   }
 
   const displayItems = displayItemsByLang[lang];
-  const values = toDisplay6(detail, score);
+  const values = toDisplay6(detail);
   const { rank, label } = getRank(score, lang);
 
   return (

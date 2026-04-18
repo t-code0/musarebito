@@ -266,7 +266,19 @@ export async function generateFoodInfo(
   }
 }
 
-/** Data-driven score calculation — 6 categories, 100 points total */
+/** Score algorithm version — bump when logic changes to trigger batch rescore */
+export const SCORE_VERSION = 2;
+
+interface PerformerBonusInput {
+  count: number;
+  hasLeaderOrOwner: boolean;
+}
+
+export interface CategoryBreakdown {
+  [cat: string]: { base: number; facts: number; performer: number; floor: number; final: number };
+}
+
+/** Data-driven score calculation v2 — 6 categories × max 17, total capped at 100 */
 export function calculateHonmonoScoreLocal(input: {
   name: string;
   rating: number | null;
@@ -275,121 +287,164 @@ export function calculateHonmonoScoreLocal(input: {
   reviews: string[];
   websiteContent: string;
   aiSummary?: string;
-}): { score: ScoreDetail; matchedKw: string[] } {
+  facilityFacts?: FacilityFacts | null;
+  performerBonus?: PerformerBonusInput | null;
+}): { score: ScoreDetail; matchedKw: string[]; debug: CategoryBreakdown } {
   const { name, rating, reviewCount, hasWebsite, reviews, websiteContent, aiSummary } = input;
+  const facts = input.facilityFacts || null;
+  const perf = input.performerBonus || null;
   const allText = reviews.join(" ") + " " + websiteContent + " " + (aiSummary || "") + " " + name;
+  const hasSignal = reviewCount >= 1 || !!websiteContent || !!aiSummary;
 
-  // 1. Visit (18pts)
-  let visit = 0;
-  if (reviewCount >= 501) visit = 18;
-  else if (reviewCount >= 301) visit = 15;
-  else if (reviewCount >= 101) visit = 12;
-  else if (reviewCount >= 51) visit = 10;
-  else if (reviewCount >= 21) visit = 8;
-  else if (reviewCount >= 6) visit = 5;
-  else if (reviewCount >= 1) visit = 3;
+  const countKw = (keywords: string[]) => {
+    let n = 0;
+    for (const kw of keywords) { if (allText.includes(kw)) n++; }
+    return n;
+  };
 
-  // 2. Quality (18pts) — rating × 4.5
-  let quality = 0;
-  if (rating && rating >= 3.0) quality = Math.min(Math.round(rating * 4.5), 18);
-
-  // 3. Sauna specialization (18pts)
-  // Sauna-dedicated facility bonus
-  let saunaSpec = 0;
-  if (/サウナ|SAUNA|Sauna/i.test(name)) saunaSpec += 6;
-  // Event richness
-  const eventKw = ["熱波","アウフグース","ロウリュイベント","熱波師"];
-  for (const kw of eventKw) { if (allText.includes(kw)) saunaSpec += 2; }
-  // Goods/merch
-  if (["サウナハット","タオル","グッズ","物販"].some(kw => allText.includes(kw))) saunaSpec += 3;
-  // Equipment detail
-  const equipKw = ["セルフロウリュ","オートロウリュ","薪サウナ","バレルサウナ","ハーバルサウナ","薬草サウナ","アロマ","アロマロウリュ","ウィスキング","ヴィヒタ"];
-  for (const kw of equipKw) { if (allText.includes(kw)) saunaSpec += 2; }
-  saunaSpec = Math.min(saunaSpec, 18);
-  const saunaKw = [...eventKw, ...equipKw, "水風呂","外気浴","ととのい"];
-
-  // 4. Trust (10pts)
-  let trust = 0;
-  if (hasWebsite) trust += 3;
-  if (reviewCount >= 10) trust += 3;
-  if (reviewCount >= 100 && rating && rating >= 3.5) trust += 4;
-  trust = Math.min(trust, 10);
-
-  // 5. Aroma/Herbal (18pts)
-  const aromaKw = ["アロマ","ハーブ","ハーバル","ヴィヒタ","白樺","ロウリュ","セルフロウリュ","薬草","ウィスキング"];
-  let aroma = 0;
-  for (const kw of aromaKw) { if (allText.includes(kw)) aroma += 3; }
-  aroma = Math.min(aroma, 18);
-
-  // 6. Facilities (18pts)
-  const facKw = ["水風呂","外気浴","岩盤浴","炭酸泉","露天","休憩"];
-  let facility = 0;
-  for (const kw of facKw) { if (allText.includes(kw)) facility += 3; }
-  facility = Math.min(facility, 18);
-
-  // Popularity boost: well-known facilities (high reviews + high rating) get baseline minimums
-  // This compensates for thin Google review samples (max 5 per call) that miss keywords.
-  const isPopular = reviewCount >= 500 && rating !== null && rating >= 4.0;
-  const isWellKnown = reviewCount >= 200 && rating !== null && rating >= 4.0;
-  if (isPopular) {
-    saunaSpec = Math.max(saunaSpec, 12);
-    aroma = Math.max(aroma, 9);
-    facility = Math.max(facility, 12);
-  } else if (isWellKnown) {
-    saunaSpec = Math.max(saunaSpec, 10);
-    aroma = Math.max(aroma, 6);
-    facility = Math.max(facility, 9);
-  }
-
-  // Baseline floors — facilities indexed as a sauna deserve a non-zero starting score
-  // even if Google reviews are too sparse to surface keywords. Without these floors,
-  // niche/young facilities ended up with three or four 0s, looking worse than reality.
-  const hasMinimalSignal = reviewCount >= 1 || !!websiteContent || !!aiSummary;
-  if (hasMinimalSignal) {
-    if (/サウナ|SAUNA|Sauna|サ活/i.test(name) || saunaSpec > 0) {
-      saunaSpec = Math.max(saunaSpec, 4);
-    } else {
-      saunaSpec = Math.max(saunaSpec, 3);
+  // ===== 1. Heat Quality (max 17) =====
+  const heatKw = ["熱波","アウフグース","ロウリュイベント","熱波師","セルフロウリュ","オートロウリュ","薪サウナ","バレルサウナ","ハーバルサウナ","薬草サウナ"];
+  let heatBase = Math.min(countKw(heatKw) * 2, 6);
+  if (/サウナ|SAUNA|Sauna/i.test(name)) heatBase += 3;
+  let heatFacts = 0;
+  if (facts) {
+    if (facts.sauna_temp_c != null) {
+      if (facts.sauna_temp_c >= 90) heatFacts += 3;
+      else if (facts.sauna_temp_c >= 80) heatFacts += 2;
+      else if (facts.sauna_temp_c >= 70) heatFacts += 1;
     }
-    aroma = Math.max(aroma, 3);
-    facility = Math.max(facility, 4);
-    if (rating !== null && rating >= 3.5) {
-      saunaSpec = Math.max(saunaSpec, 6);
-      aroma = Math.max(aroma, 5);
-      facility = Math.max(facility, 6);
+    if (facts.loyly_type && facts.loyly_type !== "なし") {
+      heatFacts += facts.loyly_type.includes("アウフグース") ? 2 : 1;
     }
   }
-
-  // Re-score safety net — if 3+ category buckets are still 0, rescue them
-  // with the smallest non-zero value so the user never sees an all-zero card.
-  const buckets = [visit, quality, saunaSpec, trust, aroma, facility];
-  const zeroCount = buckets.filter((v) => v === 0).length;
-  if (zeroCount >= 3) {
-    if (visit === 0 && reviewCount >= 1) visit = 3;
-    if (quality === 0 && rating !== null && rating > 0)
-      quality = Math.max(1, Math.round((rating || 1) * 2));
-    if (saunaSpec === 0) saunaSpec = 3;
-    if (trust === 0) trust = 2;
-    if (aroma === 0) aroma = 3;
-    if (facility === 0) facility = 3;
+  let heatPerf = 0;
+  if (perf) {
+    if (perf.count >= 10) heatPerf = 6;
+    else if (perf.count >= 5) heatPerf = 3;
   }
+  let heat = Math.min(heatBase + heatFacts + heatPerf, 17);
+  const heatFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 5 : 3) : 0;
+  heat = Math.max(heat, heatFloor);
 
-  const overall = visit + quality + saunaSpec + trust + aroma + facility;
-  const allMatched = [...saunaKw, ...aromaKw, ...facKw].filter(kw => allText.includes(kw));
-  const matchedKw = Array.from(new Set(allMatched));
+  // ===== 2. Cold Bath / Water Bath (max 17) =====
+  let coldBase = rating && rating >= 3.0 ? Math.min(Math.round(rating * 2.5), 10) : 0;
+  if (reviewCount >= 500) coldBase += 4;
+  else if (reviewCount >= 200) coldBase += 3;
+  else if (reviewCount >= 50) coldBase += 2;
+  else if (reviewCount >= 10) coldBase += 1;
+  let coldFacts = 0;
+  if (facts && facts.water_bath_temp_c != null) {
+    if (facts.water_bath_temp_c <= 17) coldFacts = 3;
+    else if (facts.water_bath_temp_c <= 20) coldFacts = 2;
+    else coldFacts = 1;
+  }
+  let cold = Math.min(coldBase + coldFacts, 17);
+  const coldFloor = rating !== null && rating >= 3.5 ? 5 : 0;
+  cold = Math.max(cold, coldFloor);
+
+  // ===== 3. Outdoor Air (max 17) =====
+  let outBase = 0;
+  if (reviewCount >= 501) outBase = 8;
+  else if (reviewCount >= 301) outBase = 7;
+  else if (reviewCount >= 101) outBase = 6;
+  else if (reviewCount >= 51) outBase = 5;
+  else if (reviewCount >= 21) outBase = 4;
+  else if (reviewCount >= 6) outBase = 3;
+  else if (reviewCount >= 1) outBase = 2;
+  const outKw = ["外気浴","露天","ととのい椅子","デッキチェア","インフィニティチェア"];
+  outBase += Math.min(countKw(outKw) * 2, 4);
+  let outFacts = 0;
+  if (facts && facts.has_outside_air === true) outFacts = 5;
+  let outdoor = Math.min(outBase + outFacts, 17);
+  const outFloor = hasSignal ? 2 : 0;
+  outdoor = Math.max(outdoor, outFloor);
+
+  // ===== 4. Cleanliness (max 17) =====
+  let cleanBase = 0;
+  if (hasWebsite) cleanBase += 3;
+  if (reviewCount >= 10) cleanBase += 2;
+  if (reviewCount >= 100 && rating !== null && rating >= 3.5) cleanBase += 2;
+  // Rating bonus
+  if (rating !== null) {
+    if (rating >= 4.5) cleanBase += 5;
+    else if (rating >= 4.0) cleanBase += 3;
+    else if (rating >= 3.5) cleanBase += 1;
+  }
+  const cleanKw = ["清潔","きれい","綺麗","清掃","掃除"];
+  cleanBase += Math.min(Math.floor(countKw(cleanKw) * 1.5), 3);
+  let cleanPerf = 0;
+  if (perf && perf.count >= 10) cleanPerf = 2;
+  let clean = Math.min(cleanBase + cleanPerf, 17);
+  const cleanFloor = hasSignal ? 3 : 0;
+  clean = Math.max(clean, cleanFloor);
+
+  // ===== 5. Aroma & Löyly (max 17) =====
+  const aromaKw = ["アロマ","ハーブ","ハーバル","ヴィヒタ","白樺","ロウリュ","セルフロウリュ","薬草","ウィスキング","アロマロウリュ"];
+  const aromaBase = Math.min(countKw(aromaKw) * 2, 6);
+  let aromaFacts = 0;
+  if (facts && facts.loyly_type && facts.loyly_type !== "なし") {
+    const lt = facts.loyly_type;
+    if (lt.includes("アロマ")) aromaFacts = 5;
+    else if (lt.includes("アウフグース")) aromaFacts = 4;
+    else if (lt.includes("セルフ") || lt.includes("オート")) aromaFacts = 3;
+    else aromaFacts = 2;
+  }
+  let aromaPerf = 0;
+  if (perf && perf.count >= 5) aromaPerf = 4;
+  let aroma = Math.min(aromaBase + aromaFacts + aromaPerf, 17);
+  const aromaFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 5 : 3) : 0;
+  aroma = Math.max(aroma, aromaFloor);
+
+  // ===== 6. Sauna Focus (max 17) =====
+  const focusKw = ["水風呂","岩盤浴","炭酸泉","休憩","ととのい"];
+  let focusBase = Math.min(countKw(focusKw) * 2, 6);
+  if (/サウナ|SAUNA|Sauna/i.test(name)) focusBase += 3;
+  let focusFacts = 0;
+  if (facts) {
+    let factFields = 0;
+    if (facts.sauna_temp_c != null) factFields++;
+    if (facts.water_bath_temp_c != null) factFields++;
+    if (facts.has_outside_air != null) factFields++;
+    if (facts.loyly_type) factFields++;
+    focusFacts = Math.min(factFields, 2);
+  }
+  let focusPerf = 0;
+  if (perf) {
+    if (perf.count >= 5) focusPerf += 4;
+    if (perf.hasLeaderOrOwner) focusPerf += 2;
+  }
+  let focus = Math.min(focusBase + focusFacts + focusPerf, 17);
+  const focusFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 6 : 4) : 0;
+  focus = Math.max(focus, focusFloor);
+
+  // ===== Overall (capped at 100) =====
+  const overall = Math.min(heat + cold + outdoor + clean + aroma + focus, 100);
+
+  const allKw = [...heatKw, ...outKw, ...cleanKw, ...aromaKw, ...focusKw];
+  const matchedKw = Array.from(new Set(allKw.filter(kw => allText.includes(kw))));
+
+  const debug: CategoryBreakdown = {
+    heat_quality: { base: heatBase, facts: heatFacts, performer: heatPerf, floor: heatFloor, final: heat },
+    water_bath: { base: coldBase, facts: coldFacts, performer: 0, floor: coldFloor, final: cold },
+    outside_air: { base: outBase, facts: outFacts, performer: 0, floor: outFloor, final: outdoor },
+    cleanliness: { base: cleanBase, facts: 0, performer: cleanPerf, floor: cleanFloor, final: clean },
+    authenticity: { base: aromaBase, facts: aromaFacts, performer: aromaPerf, floor: aromaFloor, final: aroma },
+    sauna_focus: { base: focusBase, facts: focusFacts, performer: focusPerf, floor: focusFloor, final: focus },
+  };
 
   return {
     score: {
-      water_bath: quality,
-      heat_quality: saunaSpec,
-      outside_air: visit,
-      cleanliness: trust,
+      water_bath: cold,
+      heat_quality: heat,
+      outside_air: outdoor,
+      cleanliness: clean,
       authenticity: aroma,
-      facility,
+      facility: focus,
       overall,
       explanation: "",
     },
     matchedKw,
+    debug,
   };
 }
 
