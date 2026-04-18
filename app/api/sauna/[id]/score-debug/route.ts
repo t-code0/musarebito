@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase as getServiceClient } from "@/lib/supabase";
 import { calculateHonmonoScoreLocal, SCORE_VERSION } from "@/lib/claude";
+import { getPerformerBonus } from "@/lib/performer-facilities";
 
 export const dynamic = "force-dynamic";
 
@@ -32,36 +33,8 @@ export async function GET(
     loyly_type: string | null;
   }) || null;
 
-  // Performer lookup
-  let perfCount = 0;
-  let hasLeader = false;
-  const matchedPerformers: string[] = [];
-  try {
-    const { data: perfData } = await sb
-      .from("sauna_performers")
-      .select("name,description,facilities")
-      .eq("type", "aufgusser");
-    if (perfData) {
-      const saunaName = sauna.name;
-      const matched = perfData.filter((p: Record<string, unknown>) => {
-        const facs = p.facilities as string[] | null;
-        if (facs && facs.length > 0)
-          return facs.some(
-            (f: string) =>
-              f === saunaName || saunaName.includes(f) || f.includes(saunaName)
-          );
-        return false;
-      });
-      perfCount = matched.length;
-      hasLeader = matched.some((p: Record<string, unknown>) => {
-        const desc = (p.description as string) || "";
-        return /リーダー|オーナー|代表|隊長|チーフ/.test(desc);
-      });
-      matchedPerformers.push(
-        ...matched.map((p: Record<string, unknown>) => p.name as string)
-      );
-    }
-  } catch { /* best-effort */ }
+  // Performer lookup (static mapping)
+  const perfInfo = getPerformerBonus(sauna.name);
 
   const { score, matchedKw, debug } = calculateHonmonoScoreLocal({
     name: sauna.name,
@@ -73,7 +46,7 @@ export async function GET(
     aiSummary: sauna.ai_summary || "",
     facilityFacts,
     performerBonus:
-      perfCount > 0 ? { count: perfCount, hasLeaderOrOwner: hasLeader } : null,
+      perfInfo.count > 0 ? { count: perfInfo.count, hasLeaderOrOwner: perfInfo.hasLeaderOrOwner } : null,
   });
 
   const rank =
@@ -108,9 +81,9 @@ export async function GET(
     category_breakdown: debug,
     inputs: {
       facilityFacts,
-      performerCount: perfCount,
-      hasLeaderOrOwner: hasLeader,
-      matchedPerformers,
+      performerCount: perfInfo.count,
+      hasLeaderOrOwner: perfInfo.hasLeaderOrOwner,
+      matchedPerformers: perfInfo.performers,
       matchedKeywords: matchedKw,
       reviewSample: reviewTexts.slice(0, 3).map((t) => t.slice(0, 100)),
     },

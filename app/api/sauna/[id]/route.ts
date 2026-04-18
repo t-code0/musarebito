@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServiceSupabase as getServiceClient } from "@/lib/supabase";
 import { calculateHonmonoScoreLocal, SCORE_VERSION } from "@/lib/claude";
+import { getPerformerBonus } from "@/lib/performer-facilities";
 
 export const dynamic = "force-dynamic";
 
@@ -38,29 +39,8 @@ export async function GET(
       const savedRc = prevDetail?.review_count as number | undefined;
       const rc = savedRc || gReviews?.length || 0;
 
-      // Lookup performer count for this facility (by name match)
-      let perfCount = 0;
-      let hasLeader = false;
-      try {
-        const { data: perfData } = await sb
-          .from("sauna_performers")
-          .select("name,description,facilities")
-          .eq("type", "aufgusser");
-        if (perfData) {
-          const saunaName = sauna.name;
-          const matched = perfData.filter((p: Record<string, unknown>) => {
-            const facs = p.facilities as string[] | null;
-            if (facs && facs.length > 0) return facs.some((f: string) => f === saunaName || saunaName.includes(f) || f.includes(saunaName));
-            return false;
-          });
-          perfCount = matched.length;
-          hasLeader = matched.some((p: Record<string, unknown>) => {
-            const desc = (p.description as string) || "";
-            return /リーダー|オーナー|代表|隊長|チーフ/.test(desc);
-          });
-        }
-      } catch { /* performer lookup is best-effort */ }
-
+      // Performer lookup (static mapping)
+      const perfInfo = getPerformerBonus(sauna.name);
       const facilityFacts = prevDetail?.facility_facts as { sauna_temp_c: number | null; water_bath_temp_c: number | null; has_outside_air: boolean | null; loyly_type: string | null } | null;
 
       const { score: scoreVal } = calculateHonmonoScoreLocal({
@@ -72,7 +52,7 @@ export async function GET(
         websiteContent: "",
         aiSummary: sauna.ai_summary || "",
         facilityFacts,
-        performerBonus: perfCount > 0 ? { count: perfCount, hasLeaderOrOwner: hasLeader } : null,
+        performerBonus: perfInfo.count > 0 ? { count: perfInfo.count, hasLeaderOrOwner: perfInfo.hasLeaderOrOwner } : null,
       });
       (scoreVal as Record<string, unknown>).review_count = rc;
       (scoreVal as Record<string, unknown>).score_version = SCORE_VERSION;
