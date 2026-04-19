@@ -92,14 +92,35 @@ export default function Footer() {
             <Link href={`/${lang}/glossary`} className="text-gray-400 hover:text-white">
               {isEn ? "Glossary" : "用語辞典"}
             </Link>
-            <Link href={`/${lang}/privacy`} className="text-gray-400 hover:text-white">
-              {isEn ? "Privacy" : "プライバシーポリシー"}
-            </Link>
-            <Link href={`/${lang}/terms`} className="text-gray-400 hover:text-white">
-              {isEn ? "Terms" : "利用規約"}
-            </Link>
           </nav>
         </div>
+
+        {/* Legal links */}
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs mb-4 pt-3 border-t border-white/10">
+          <Link href={`/${lang}/terms`} className="text-gray-500 hover:text-white">
+            {isEn ? "Terms of Service" : "利用規約"}
+          </Link>
+          <Link href={`/${lang}/privacy`} className="text-gray-500 hover:text-white">
+            {isEn ? "Privacy Policy" : "プライバシーポリシー"}
+          </Link>
+          <Link href={`/${lang}/disclaimer`} className="text-gray-500 hover:text-white">
+            {isEn ? "Disclaimer" : "免責事項"}
+          </Link>
+          <Link href={`/${lang}/legal`} className="text-gray-500 hover:text-white">
+            {isEn ? "Legal Notice" : "特定商取引法に基づく表記"}
+          </Link>
+          <Link href={`/${lang}/contact`} className="text-gray-500 hover:text-white">
+            {isEn ? "Contact" : "お問い合わせ"}
+          </Link>
+        </div>
+
+        {/* Affiliate disclosure */}
+        <p className="text-gray-600 text-[10px] leading-relaxed mb-3">
+          {isEn
+            ? "This site participates in the Amazon.co.jp Associates Program, Rakuten Affiliate, and other affiliate programs. We may earn referral fees from qualifying purchases through affiliate links."
+            : "当サイトはAmazon.co.jpアソシエイト、楽天アフィリエイト等のアフィリエイトプログラムに参加しています。リンク経由の購入により紹介料が発生する場合があります。"}
+        </p>
+
         <p className="text-gray-500 text-xs">
           &copy; 2026 {isEn ? "Musarebito" : "蒸され人"} All rights reserved.
         </p>
