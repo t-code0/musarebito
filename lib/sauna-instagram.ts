@@ -95,9 +95,9 @@ export const SAUNA_INSTAGRAM_ACCOUNTS: SaunaInstagramAccount[] = [
     category: "review",
   },
   {
-    handle: "saunaboys_official",
-    name: "サウナ男子｜チル・サ活",
-    description: "年間300日以上サウナに通い毎日18時にサウナ情報を発信",
+    handle: "saunacrazy_official",
+    name: "クレイジーサウナ",
+    description: "全国のサウナを独自目線でレビューするサウナ情報アカウント",
     category: "review",
   },
   {

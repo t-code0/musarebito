@@ -51,7 +51,7 @@ export default function Footer() {
         borderTop: "1px solid rgba(255,255,255,0.1)",
       }}
     >
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* HONMONO シリーズ */}
         <div className="mb-8">
           <p className="text-white/80 text-sm font-bold mb-3 tracking-wider">

@@ -181,7 +181,7 @@ export default function HomePage() {
       </div>
 
       {/* About */}
-      <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 mb-8">
+      <section className="mx-2 md:max-w-7xl md:mx-auto px-2 md:px-4 mb-8">
         <div
           className="rounded-2xl p-6"
           style={{
@@ -200,7 +200,7 @@ export default function HomePage() {
       </section>
 
       {/* Honmono Score explanation */}
-      <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 mb-8">
+      <section className="mx-2 md:max-w-7xl md:mx-auto px-2 md:px-4 mb-8">
         <div
           className="rounded-2xl p-4"
           style={{
@@ -246,7 +246,7 @@ export default function HomePage() {
       </section>
 
       {/* Prefectures */}
-      <section className="max-w-[95vw] mx-auto px-4 pb-16">
+      <section className="max-w-7xl mx-auto px-4 pb-16">
         <h2 className="text-2xl md:text-4xl font-bold text-white mb-6 text-center">
           {t("home_prefs_title", lang)}
         </h2>
@@ -266,7 +266,7 @@ export default function HomePage() {
       </section>
 
       {/* Content Grid */}
-      <section className="max-w-[85vw] mx-auto px-4 pb-16">
+      <section className="max-w-7xl mx-auto px-4 pb-16">
         <h2 className="text-3xl font-bold text-white mb-6 text-center">
           {t("home_content_title", lang)}
         </h2>
@@ -300,12 +300,12 @@ export default function HomePage() {
       </section>
 
       {/* Sauna Goods (Affiliate) */}
-      <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 mb-8">
+      <section className="mx-2 md:max-w-7xl md:mx-auto px-2 md:px-4 mb-8">
         <SaunaGoods source="home" />
       </section>
 
       {/* HONMONO Series */}
-      <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 mb-12">
+      <section className="mx-2 md:max-w-7xl md:mx-auto px-2 md:px-4 mb-12">
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
           {lang === "en"
             ? "HONMONO Series — Find authentic places in Japan"
@@ -419,7 +419,7 @@ export default function HomePage() {
 
       {/* Featured Saunas - Rich */}
       {featured.length > 0 && (
-        <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 pb-20">
+        <section className="mx-2 md:max-w-7xl md:mx-auto px-2 md:px-4 pb-20">
           <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
             {t("home_featured_title", lang)}
           </h2>

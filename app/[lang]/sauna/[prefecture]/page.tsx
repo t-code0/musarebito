@@ -117,7 +117,7 @@ export default function PrefecturePage() {
       </div>
 
       {/* Score explanation */}
-      <div className="max-w-[95vw] mx-auto px-4 pt-6 mb-4">
+      <div className="max-w-7xl mx-auto px-4 pt-6 mb-4">
         <div
           className="rounded-2xl p-4"
           style={{
@@ -162,7 +162,7 @@ export default function PrefecturePage() {
         </div>
       </div>
 
-      <div className="max-w-[95vw] mx-auto px-4 sm:px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
         {loading ? (
           <div className="text-center py-20">
             <div className="inline-block w-8 h-8 border-4 border-red-400 border-t-transparent rounded-full animate-spin" />

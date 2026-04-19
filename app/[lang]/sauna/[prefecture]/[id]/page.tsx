@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import HonmonoScore from "@/components/HonmonoScore";
 import ReviewModal from "@/components/ReviewModal";
 import SaunaGoods from "@/components/SaunaGoods";
@@ -25,6 +25,9 @@ export default function SaunaDetailPage() {
   const lang: Lang = normalizeLang(params.lang as string);
   const prefecture = decodeURIComponent(params.prefecture as string);
   const id = params.id as string;
+
+  const searchParams = useSearchParams();
+  const adminKey = searchParams.get("admin") || "";
 
   const [sauna, setSauna] = useState<SaunaWithEn | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -221,7 +224,7 @@ export default function SaunaDetailPage() {
           />
         ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 p-6 max-w-5xl mx-auto">
+        <div className="absolute bottom-0 left-0 right-0 p-6 max-w-7xl mx-auto">
           <a
             href={`/${lang}`}
             className="text-green-300 hover:text-green-200 text-base mb-1 inline-block"
@@ -240,9 +243,9 @@ export default function SaunaDetailPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Mobile: Score first (before photos) */}
-        <div className="md:hidden mb-8">
+        <div className="lg:hidden mb-8">
           <HonmonoScore
             score={sauna.honmono_score}
             detail={sauna.score_detail}
@@ -250,9 +253,9 @@ export default function SaunaDetailPage() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Left Column — main content */}
+          <div className="flex-1 min-w-0 space-y-8">
             {/* Photos */}
             {photoList.length > 0 && (
               <section className="bg-white rounded-xl shadow-sm p-6">
@@ -550,6 +553,25 @@ export default function SaunaDetailPage() {
                       <div className="flex items-center gap-2 mb-2">
                         <span className="text-amber-400">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
                         <span className="text-xs text-gray-500">{new Date(review.created_at).toLocaleDateString("ja-JP")}</span>
+                        {adminKey && (
+                          <button
+                            onClick={async () => {
+                              if (!confirm(lang === "en" ? "Delete this review?" : "この口コミを削除しますか？")) return;
+                              const res = await fetch(`/api/sauna/${id}/review/${review.id}`, {
+                                method: "DELETE",
+                                headers: { "x-admin-key": adminKey },
+                              });
+                              if (res.ok) {
+                                setReviews((prev) => prev.filter((r) => r.id !== review.id));
+                              } else {
+                                alert(lang === "en" ? "Deletion failed" : "削除に失敗しました");
+                              }
+                            }}
+                            className="ml-auto text-xs text-red-400 hover:text-red-300 border border-red-400/30 px-2 py-0.5 rounded"
+                          >
+                            {lang === "en" ? "Delete" : "削除"}
+                          </button>
+                        )}
                       </div>
                       <p className="text-gray-800 text-sm whitespace-pre-wrap">{review.body}</p>
                       {review.photo_url && (() => {
@@ -587,13 +609,13 @@ export default function SaunaDetailPage() {
             </section>
           </div>
 
-          {/* Right Column — PC only */}
-          <div className="hidden lg:block">
+          {/* Right Column — PC only, fixed width */}
+          <div className="hidden lg:block w-[340px] shrink-0">
             <div className="sticky top-8">
               <HonmonoScore
                 score={sauna.honmono_score}
                 detail={sauna.score_detail}
-    
+
               />
             </div>
           </div>
