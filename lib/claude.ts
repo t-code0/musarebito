@@ -616,7 +616,7 @@ export function calculateHonmonoScoreLocal(input: {
   // ===== Whitelist guarantee: ensure min 75 for famous facilities =====
   const whitelisted = isWhitelisted(name);
   if (whitelisted) {
-    let rawTotal = heat + cold + outdoor + clean + aroma + focus;
+    const rawTotal = heat + cold + outdoor + clean + aroma + focus;
     if (rawTotal < 75) {
       const deficit = 75 - rawTotal;
       const cats = [
