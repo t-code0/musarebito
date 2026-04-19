@@ -41,7 +41,6 @@ const contentCards: { icon: string; title_ja: string; title_en: string; desc_ja:
     desc_ja: "サウナ系Instagramアカウント",
     desc_en: "Curated sauna Instagram accounts",
     href: "/sauna-instagram",
-    comingSoon: true,
   },
   {
     icon: "🛍️",
@@ -308,66 +307,113 @@ export default function HomePage() {
       {/* HONMONO Series */}
       <section className="mx-2 md:max-w-[85vw] md:mx-auto px-2 md:px-4 mb-12">
         <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 text-center">
-          {lang === "en" ? "🏆 HONMONO Series" : "🏆 HONMONOシリーズ"}
-        </h2>
-        <p className="text-center text-white/60 text-sm md:text-base mb-6">
           {lang === "en"
-            ? "Our family of evidence-based search apps. Find the real deal in every category."
-            : "本物だけを探すための姉妹サービス。各分野で「課金しても使いたい」を追求中。"}
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
+            ? "HONMONO Series — Find authentic places in Japan"
+            : "HONMONOシリーズ - 本物を見つけるプラットフォーム"}
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {([
+            {
+              icon: "🔍",
+              name_ja: "アリフ（Amazon本物商品検索）",
+              name_en: "Arifu (Amazon Real Filter Search)",
+              desc_ja: "AIがAmazonの商品レビューを分析。サクラレビューを見破り、本物の高評価商品だけを表示。",
+              desc_en: "AI analyzes Amazon reviews to detect fake ratings and surface only genuinely top-rated products.",
+              href: "https://arisa.vercel.app",
+              cta_ja: "商品を探す",
+              cta_en: "Search products",
+            },
             {
               icon: "🧪",
               name_ja: "添加物検索図鑑",
               name_en: "Food Additive Encyclopedia",
-              desc_ja: "食品添加物の安全性を論文ベースで検索。子育て世代・健康意識の高い人に。",
-              desc_en: "Search food additives by peer-reviewed research. Built for health-conscious families.",
+              desc_ja: "バーコードをスキャンするだけで食品の添加物をチェック。危険度スコアで安全な食品選びをサポート。",
+              desc_en: "Just scan a barcode to check food additives. Risk scores help you choose safer foods.",
               href: "https://tenkabutsu-zukan.vercel.app/ja",
+              cta_ja: "今すぐチェック",
+              cta_en: "Check now",
             },
             {
               icon: "🥗",
               name_ja: "栄養成分検索図鑑",
-              name_en: "Nutrient Encyclopedia",
-              desc_ja: "栄養成分とサプリを論文で比較。サプリ選びを科学的に。",
-              desc_en: "Compare nutrients and supplements by clinical evidence.",
+              name_en: "Nutrition Encyclopedia",
+              desc_ja: "2,000種以上の食品の栄養成分をAIで分析。科学的根拠に基づいた食品選びに。",
+              desc_en: "AI-analyzed nutrition data for 2,000+ foods. Make evidence-based food choices.",
               href: "https://eiyo-zukan.vercel.app/ja",
+              cta_ja: "詳しく見る",
+              cta_en: "Learn more",
             },
             {
-              icon: "🍽",
-              name_ja: "リタマ",
-              name_en: "Ritama",
-              desc_ja: "近所の本物のお店を本物スコアで探す。食べログにない深い情報を。",
-              desc_en: "Discover authentic local restaurants ranked by HONMONO score.",
-              href: "https://ritama.vercel.app/ja",
+              icon: "🧖",
+              name_ja: "蒸され人",
+              name_en: "Musarebito",
+              desc_ja: "全国のサウナ施設をAIが分析・ランキング。口コミ要約と本物スコアで最高のサウナ体験を。",
+              desc_en: "AI-analyzed and ranked saunas across Japan. Find the best with review summaries and HONMONO scores.",
+              href: null as string | null,
+              cta_ja: "今ここ",
+              cta_en: "You are here",
             },
-          ].map((s) => (
-            <a
-              key={s.href}
-              href={s.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block rounded-2xl p-5 transition-transform hover:scale-[1.02]"
-              style={{
-                background:
-                  "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.08) 100%)",
-                border: "1px solid rgba(255,255,255,0.2)",
-                boxShadow:
-                  "0 8px 24px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.1)",
-              }}
-            >
-              <div className="text-3xl mb-2">{s.icon}</div>
-              <h3 className="text-lg font-bold text-white mb-2">
-                {lang === "en" ? s.name_en : s.name_ja}
-              </h3>
-              <p className="text-sm text-white/60 leading-relaxed mb-4">
-                {lang === "en" ? s.desc_en : s.desc_ja}
-              </p>
-              <span className="inline-block text-sm px-4 py-2 rounded-full bg-amber-500 text-white font-bold">
-                {lang === "en" ? "Open →" : "サイトを見る →"}
-              </span>
-            </a>
-          ))}
+            {
+              icon: "📍",
+              name_ja: "リタマ（近所の本物店舗検索）",
+              name_en: "Ritama (Local Business Finder in Japan)",
+              desc_ja: "Googleマップの口コミをAIが分析。本物スコアで信頼できるお店が見つかる地域情報プラットフォーム。",
+              desc_en: "AI analyzes Google Maps reviews across Japan. HONMONO scores reveal the truly trustworthy local businesses.",
+              href: "https://ritama.vercel.app",
+              cta_ja: "お店を探す",
+              cta_en: "Find shops",
+            },
+          ] as const).map((s) => {
+            const inner = (
+              <>
+                <div className="text-3xl mb-2">{s.icon}</div>
+                <h3 className="font-bold text-white mb-2 text-sm">
+                  {lang === "en" ? s.name_en : s.name_ja}
+                </h3>
+                <p className="text-xs text-white/50 flex-1 leading-relaxed">
+                  {lang === "en" ? s.desc_en : s.desc_ja}
+                </p>
+                <span className={`mt-3 inline-block text-sm font-bold ${s.href ? "text-amber-400" : "text-green-400"}`}>
+                  {s.href
+                    ? `${lang === "en" ? s.cta_en : s.cta_ja} →`
+                    : (lang === "en" ? s.cta_en : s.cta_ja)}
+                </span>
+              </>
+            );
+
+            if (s.href) {
+              return (
+                <a
+                  key={s.name_ja}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-2xl p-5 text-center flex flex-col transition-transform hover:scale-[1.02]"
+                  style={{
+                    background: "linear-gradient(160deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0.08) 100%)",
+                    border: "1px solid rgba(255,255,255,0.2)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.1)",
+                  }}
+                >
+                  {inner}
+                </a>
+              );
+            }
+
+            return (
+              <div
+                key={s.name_ja}
+                className="rounded-2xl p-5 text-center flex flex-col ring-1 ring-green-400/30"
+                style={{
+                  background: "linear-gradient(160deg, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 50%, rgba(34,197,94,0.1) 100%)",
+                  border: "2px solid rgba(34,197,94,0.4)",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.1)",
+                }}
+              >
+                {inner}
+              </div>
+            );
+          })}
         </div>
       </section>
 

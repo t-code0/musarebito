@@ -5,25 +5,36 @@ import { normalizeLang } from "@/lib/i18n";
 
 const HONMONO_SERIES = [
   {
+    emoji: "🔍",
+    name_ja: "アリフ（Amazon本物商品検索）",
+    name_en: "Arifu (Amazon Real Filter Search)",
+    desc_ja: "Amazonで本物の商品を見つける",
+    desc_en: "Find authentic products on Amazon",
+    href: "https://arisa.vercel.app",
+  },
+  {
+    emoji: "🧪",
     name_ja: "添加物検索図鑑",
     name_en: "Food Additive Encyclopedia",
-    desc_ja: "食品添加物の安全性を論文ベースで検索",
-    desc_en: "Search food additives by peer-reviewed evidence",
+    desc_ja: "バーコードで食品の安全性をチェック",
+    desc_en: "Check food safety by barcode",
     href: "https://tenkabutsu-zukan.vercel.app/ja",
   },
   {
+    emoji: "🥗",
     name_ja: "栄養成分検索図鑑",
-    name_en: "Nutrient Encyclopedia",
-    desc_ja: "栄養成分とサプリを論文で比較",
-    desc_en: "Compare nutrients and supplements with research",
+    name_en: "Nutrition Encyclopedia",
+    desc_ja: "食品の栄養を科学的に比較",
+    desc_en: "Compare food nutrition scientifically",
     href: "https://eiyo-zukan.vercel.app/ja",
   },
   {
-    name_ja: "リタマ",
-    name_en: "Ritama",
-    desc_ja: "近所の本物のお店を本物スコアで探す",
-    desc_en: "Find authentic local restaurants by HONMONO score",
-    href: "https://ritama.vercel.app/ja",
+    emoji: "📍",
+    name_ja: "リタマ（近所の本物店舗検索）",
+    name_en: "Ritama (Local Business Finder in Japan)",
+    desc_ja: "近所の本物店舗検索",
+    desc_en: "Local Business Finder in Japan",
+    href: "https://ritama.vercel.app",
   },
 ];
 
@@ -46,7 +57,7 @@ export default function Footer() {
           <p className="text-white/80 text-sm font-bold mb-3 tracking-wider">
             {isEn ? "HONMONO Series" : "HONMONOシリーズ"}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {HONMONO_SERIES.map((s) => (
               <a
                 key={s.href}
@@ -56,7 +67,7 @@ export default function Footer() {
                 className="block rounded-lg p-3 border border-white/15 hover:border-amber-400 hover:bg-white/5 transition-colors"
               >
                 <p className="text-white text-base font-bold mb-0.5">
-                  {isEn ? s.name_en : s.name_ja}
+                  {s.emoji} {isEn ? s.name_en : s.name_ja}
                 </p>
                 <p className="text-white/50 text-xs leading-snug">
                   {isEn ? s.desc_en : s.desc_ja}
