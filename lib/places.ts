@@ -1,5 +1,5 @@
 import { getServiceSupabase as getServiceClient } from "./supabase";
-import { fetchWebsiteImages } from "./claude";
+import { findSaunaPhotoIndex } from "./claude";
 
 const CACHE_DAYS = 180;
 const API_KEY = () => process.env.GOOGLE_PLACES_API_KEY!;
@@ -22,7 +22,7 @@ async function photoNameToUrl(photoName: string): Promise<string> {
   return data.photoUri || `${PLACES_V1}/${photoName}/media?maxWidthPx=800&key=${API_KEY()}`;
 }
 
-/** Pick 6 photos evenly spread from an array */
+/** Pick N photos evenly spread from an array */
 function pickEvenly(urls: string[], count: number): string[] {
   if (urls.length <= count) return urls;
   const step = (urls.length - 1) / (count - 1);
@@ -33,19 +33,80 @@ function pickEvenly(urls: string[], count: number): string[] {
   return result;
 }
 
+/** Check if a place name indicates a non-sauna business */
+const EXCLUDE_NAME_PATTERNS = /グッズ|専門店|ショップ|shop|store|販売|用品|ヘッドスパ|マッサージ|エステ|ネイル|美容|整体|接骨|鍼灸|カイロ|ジム|GYM|フィットネス|FITNESS|スポーツクラブ|JOYFIT|エニタイム|ANYTIME|コナミ|ルネサンス|ゴールドジム|GOLD'S|カーブス|ティップネス|セントラルウェルネス/i;
+
+/** Extract city from Japanese address */
+function extractCity(address: string): string {
+  // Remove prefecture prefix and postal code
+  const cleaned = address.replace(/〒\d{3}-?\d{4}\s*/, "").replace(/^日本、?\s*/, "");
+  // Match city: 〇〇市, 〇〇区, 〇〇町, 〇〇郡〇〇町, 〇〇村
+  const m = cleaned.match(/(?:北海道|東京都|.{2,3}[府県])?\s*(.+?[市区町村])/);
+  return m ? m[1].trim() : "";
+}
+
+/** Save places from API results to DB */
+async function savePlacesToDB(
+  places: Record<string, unknown>[],
+  prefecture: string,
+  sb: ReturnType<typeof getServiceClient>,
+) {
+  for (const place of places) {
+    const name = ((place as { displayName?: { text: string } }).displayName)?.text || "";
+    if (EXCLUDE_NAME_PATTERNS.test(name)) continue;
+
+    const isClosed = (place as { businessStatus?: string }).businessStatus === "CLOSED_PERMANENTLY";
+    const photos = place.photos as { name: string }[] | undefined;
+    const photoUrls: string[] = [];
+    if (photos?.length) {
+      for (const p of photos.slice(0, 3)) {
+        try { photoUrls.push(await photoNameToUrl(p.name)); } catch { /* skip */ }
+      }
+    }
+
+    const addr = ((place as { formattedAddress?: string }).formattedAddress) || "";
+    const city = extractCity(addr);
+
+    await sb.from("saunas").upsert(
+      {
+        place_id: (place as { id?: string }).id,
+        name: ((place as { displayName?: { text: string } }).displayName)?.text || "",
+        prefecture,
+        city,
+        address: addr,
+        lat: ((place as { location?: { latitude: number } }).location)?.latitude || 0,
+        lng: ((place as { location?: { longitude: number } }).location)?.longitude || 0,
+        rating: (place as { rating?: number }).rating || 0,
+        photos: photoUrls.length > 0 ? photoUrls : [],
+        cached_at: new Date().toISOString(),
+        is_closed: isClosed,
+      },
+      { onConflict: "place_id" }
+    );
+  }
+}
+
 export async function searchPlaces(query: string, prefecture?: string) {
   const sb = getServiceClient();
-  const searchQuery = prefecture ? `${query} ${prefecture} サウナ` : `${query} サウナ`;
+  const searchQuery = prefecture
+    ? (query ? `${query} ${prefecture} サウナ` : `${prefecture} サウナ`)
+    : `${query} サウナ`;
 
-  // Always return DB data first if available
-  const { data: cached } = await sb
-    .from("saunas")
-    .select("*")
-    .ilike("name", `%${query}%`);
+  // Return DB data if available (no limit)
+  let dbQuery = sb.from("saunas").select("*");
+  if (prefecture) dbQuery = dbQuery.eq("prefecture", prefecture);
+  if (query) dbQuery = dbQuery.ilike("name", `%${query}%`);
+  dbQuery = dbQuery.order("honmono_score", { ascending: false, nullsFirst: false }).order("rating", { ascending: false });
+  const { data: cached } = await dbQuery;
 
   if (cached && cached.length > 0) return cached;
 
-  // No data in DB — fetch from Places API (New): Text Search
+  // No data in DB — fetch from Places API with a single keyword (cold-start: keep it cheap)
+  const coldKeyword = prefecture && !query ? `サウナ ${prefecture}` : searchQuery;
+
+  const seenIds = new Set<string>();
+  const allPlaces: Record<string, unknown>[] = [];
+
   const res = await fetch(`${PLACES_V1}/places:searchText`, {
     method: "POST",
     headers: {
@@ -54,56 +115,68 @@ export async function searchPlaces(query: string, prefecture?: string) {
       "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.photos,places.businessStatus",
       Referer: REFERER,
     },
-    body: JSON.stringify({
-      textQuery: searchQuery,
-      languageCode: "ja",
-    }),
+    body: JSON.stringify({ textQuery: coldKeyword, languageCode: "ja", pageSize: 20 }),
   });
   const data = await res.json();
-  const results = data.places || [];
-
-  for (const place of results) {
-    const isClosed = place.businessStatus === "CLOSED_PERMANENTLY";
-    const photoUrls: string[] = [];
-    if (place.photos?.length) {
-      for (const p of place.photos.slice(0, 3)) {
-        try {
-          photoUrls.push(await photoNameToUrl(p.name));
-        } catch { /* skip */ }
-      }
+  for (const p of data.places || []) {
+    if (!seenIds.has(p.id)) {
+      seenIds.add(p.id);
+      allPlaces.push(p);
     }
-
-    await sb.from("saunas").upsert(
-      {
-        place_id: place.id,
-        name: place.displayName?.text || "",
-        prefecture: prefecture || "",
-        city: "",
-        address: place.formattedAddress || "",
-        lat: place.location?.latitude || 0,
-        lng: place.location?.longitude || 0,
-        rating: place.rating || 0,
-        photos: photoUrls.length > 0 ? photoUrls : [],
-        cached_at: new Date().toISOString(),
-        is_closed: isClosed,
-      },
-      { onConflict: "place_id" }
-    );
   }
 
-  const { data: freshData } = await sb
-    .from("saunas")
-    .select("*")
-    .ilike("name", `%${query}%`);
+  await savePlacesToDB(allPlaces, prefecture || "", sb);
+
+  // Re-read from DB with same filters
+  let freshQuery = sb.from("saunas").select("*");
+  if (prefecture) freshQuery = freshQuery.eq("prefecture", prefecture);
+  if (query) freshQuery = freshQuery.ilike("name", `%${query}%`);
+  freshQuery = freshQuery.order("honmono_score", { ascending: false, nullsFirst: false }).order("rating", { ascending: false });
+  const { data: freshData } = await freshQuery;
 
   return freshData || [];
 }
 
+/** Bulk seed: search and save for a specific query */
+export async function seedSearch(searchQuery: string, prefecture: string) {
+  const sb = getServiceClient();
+  let allPlaces: Record<string, unknown>[] = [];
+  let pageToken: string | undefined;
+
+  for (let page = 0; page < 3; page++) {
+    const body: Record<string, unknown> = {
+      textQuery: searchQuery,
+      languageCode: "ja",
+      pageSize: 20,
+    };
+    if (pageToken) body.pageToken = pageToken;
+
+    const res = await fetch(`${PLACES_V1}/places:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": API_KEY(),
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.photos,places.businessStatus,nextPageToken",
+        Referer: REFERER,
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    allPlaces = allPlaces.concat(data.places || []);
+    pageToken = data.nextPageToken;
+    if (!pageToken) break;
+  }
+
+  await savePlacesToDB(allPlaces, prefecture, sb);
+  return allPlaces.length;
+}
+
 /** Fetch place details using Places API (New) */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function getPlaceDetail(placeId: string, websiteUrl?: string) {
   const fields = [
     "displayName", "formattedAddress", "nationalPhoneNumber",
-    "websiteUri", "regularOpeningHours", "reviews",
+    "websiteUri", "regularOpeningHours", "reviews", "userRatingCount",
     "photos", "rating", "location", "businessStatus",
   ].join(",");
 
@@ -124,61 +197,40 @@ export async function getPlaceDetail(placeId: string, websiteUrl?: string) {
 
   const place = await res.json();
 
-  // Resolve Google photo URLs: up to 20, filter out tall/narrow (menu/signage)
+  // Google Photos: up to 20, near-square only
   const googleUrls: string[] = [];
   if (place.photos?.length) {
     const candidates = place.photos
       .slice(0, 20)
-      .filter((p: { widthPx?: number; heightPx?: number }) =>
-        !(p.heightPx && p.widthPx && p.heightPx > p.widthPx * 1.5)
-      );
+      .filter((p: { widthPx?: number; heightPx?: number }) => {
+        if (!p.widthPx || !p.heightPx) return true;
+        const ratio = p.widthPx / p.heightPx;
+        return ratio > 0.5 && ratio < 2.0;
+      });
     for (const p of candidates) {
       try {
         googleUrls.push(await photoNameToUrl(p.name));
       } catch { /* skip */ }
     }
   }
-
-  // Fetch website images if URL available
-  const siteUrl = websiteUrl || place.websiteUri;
-  let siteImages: { url: string; path: string }[] = [];
-  if (siteUrl) {
+  // Pick 6 evenly, then try to find sauna photo and put it first
+  let photos: string[] | null = null;
+  if (googleUrls.length > 0) {
+    const picked = pickEvenly(googleUrls, 6);
     try {
-      siteImages = await fetchWebsiteImages(siteUrl);
-    } catch { /* skip */ }
-  }
-
-  // Merge: website images first (categorized by path), then Google photos
-  const saunaPattern = /\/sauna|\/spa|\/onsen|\/bath|風呂|サウナ/i;
-  const foodPattern = /\/restaurant|\/food|\/menu|\/cafe|\/drink|レストラン|食事/i;
-
-  const siteSauna = siteImages.filter(img => saunaPattern.test(img.path) || saunaPattern.test(img.url));
-  const siteFood = siteImages.filter(img => foodPattern.test(img.path) || foodPattern.test(img.url));
-  const siteOther = siteImages.filter(img =>
-    !siteSauna.includes(img) && !siteFood.includes(img)
-  );
-
-  // Build final list: prioritize website images, fill with Google
-  const seen = new Set<string>();
-  const finalPhotos: string[] = [];
-  const addUnique = (url: string) => {
-    if (!seen.has(url) && finalPhotos.length < 6) {
-      seen.add(url);
-      finalPhotos.push(url);
+      const saunaIdx = await findSaunaPhotoIndex(googleUrls);
+      if (saunaIdx !== null) {
+        const saunaUrl = googleUrls[saunaIdx];
+        // Put sauna photo first, then fill with others (no duplicates)
+        const rest = picked.filter(u => u !== saunaUrl);
+        photos = [saunaUrl, ...rest].slice(0, 6);
+      } else {
+        photos = picked;
+      }
+    } catch {
+      photos = picked;
     }
-  };
-
-  // 1. Website sauna/onsen images (up to 2)
-  siteSauna.slice(0, 2).forEach(img => addUnique(img.url));
-  // 2. Website food images (up to 1)
-  siteFood.slice(0, 1).forEach(img => addUnique(img.url));
-  // 3. Website other images (up to 1)
-  siteOther.slice(0, 1).forEach(img => addUnique(img.url));
-  // 4. Fill remaining with Google photos (evenly picked)
-  const googlePicked = pickEvenly(googleUrls, 6);
-  for (const url of googlePicked) addUnique(url);
-
-  const photos = finalPhotos.length > 0 ? finalPhotos : null;
+  }
 
   return {
     formatted_phone_number: place.nationalPhoneNumber,
@@ -194,10 +246,89 @@ export async function getPlaceDetail(placeId: string, websiteUrl?: string) {
     })),
     photos,
     rating: place.rating,
+    review_count: place.userRatingCount || 0,
     business_status: place.businessStatus === "CLOSED_PERMANENTLY"
       ? "CLOSED_PERMANENTLY"
       : place.businessStatus,
   };
+}
+
+/** Normalize facility name for comparison */
+function normalizeName(name: string): string {
+  return name
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0))
+    .replace(/＆/g, "&")
+    .replace(/[\s　]+/g, "")
+    .toLowerCase();
+}
+
+/** Register missing saunas from an external facility list */
+export async function registerMissingSaunas(
+  facilities: { name: string; address: string }[],
+  prefecture: string
+): Promise<{ registered: string[]; existing: string[]; notFound: string[] }> {
+  const sb = getServiceClient();
+  const registered: string[] = [];
+  const existing: string[] = [];
+  const notFound: string[] = [];
+  let count = 0;
+
+  // Pre-fetch all DB names for this prefecture (normalize for comparison)
+  const { data: dbSaunas } = await sb
+    .from("saunas")
+    .select("name")
+    .eq("prefecture", prefecture);
+  const dbNormalized = new Set(
+    (dbSaunas || []).map((s: { name: string }) => normalizeName(s.name))
+  );
+
+  for (const fac of facilities) {
+    if (count >= 15) break;
+    if (EXCLUDE_NAME_PATTERNS.test(fac.name)) continue;
+    if (count > 0 && count % 5 === 0) await new Promise(r => setTimeout(r, 1000));
+
+    // Check if already in DB (normalized comparison)
+    if (dbNormalized.has(normalizeName(fac.name))) {
+      existing.push(fac.name);
+      continue;
+    }
+
+    // Search via Places API
+    const searchQ = `${fac.name} ${fac.address || prefecture}`;
+    const res = await fetch(`${PLACES_V1}/places:searchText`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": API_KEY(),
+        "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.photos,places.businessStatus",
+        Referer: REFERER,
+      },
+      body: JSON.stringify({ textQuery: searchQ, languageCode: "ja", pageSize: 1 }),
+    });
+    const data = await res.json();
+    const places = data.places || [];
+
+    if (places.length > 0) {
+      // Verify the result is actually in the target prefecture
+      const addr = places[0].formattedAddress || "";
+      const prefShort = prefecture.replace(/[都道府県]$/, "");
+      if (!addr.includes(prefShort) && !addr.includes(prefecture)) {
+        notFound.push(fac.name + " (県外)");
+        continue;
+      }
+      await savePlacesToDB(places, prefecture, sb);
+      registered.push(fac.name);
+      dbNormalized.add(normalizeName(fac.name));
+      // Also add the Google name to prevent re-registration
+      const gName = places[0].displayName?.text;
+      if (gName) dbNormalized.add(normalizeName(gName));
+      count++;
+    } else {
+      notFound.push(fac.name);
+    }
+  }
+
+  return { registered, existing, notFound };
 }
 
 export { isCacheExpired };

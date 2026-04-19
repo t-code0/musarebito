@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabase } from "@/lib/supabase";
+import { getServiceSupabase } from "@/lib/supabase";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { sauna_id, user_id, rating, body: reviewBody, photo_url } = body;
+    console.log("[/api/review] POST received:", { sauna_id, user_id, rating, bodyLen: reviewBody?.length, hasPhoto: !!photo_url });
 
     // Validation
     if (!sauna_id || !user_id || !rating || !reviewBody) {
@@ -35,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data, error } = await getSupabase()
+    const { data, error } = await getServiceSupabase()
       .from("sauna_reviews")
       .insert({
         sauna_id,
@@ -48,18 +51,20 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error("Review insert error:", error);
+      console.error("[/api/review] insert error:", error.code, error.message, error.details);
       return NextResponse.json(
-        { error: "口コミの投稿に失敗しました" },
+        { error: `口コミの投稿に失敗しました: ${error.message}` },
         { status: 500 }
       );
     }
 
+    console.log("[/api/review] success:", data.id);
     return NextResponse.json({ review: data }, { status: 201 });
   } catch (error) {
-    console.error("Review error:", error);
+    console.error("[/api/review] exception:", error);
+    const msg = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
-      { error: "口コミの投稿中にエラーが発生しました" },
+      { error: `口コミの投稿中にエラーが発生しました: ${msg}` },
       { status: 500 }
     );
   }

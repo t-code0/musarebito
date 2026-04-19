@@ -4,6 +4,25 @@ export interface FoodInfo {
   nearby_spots: string[];
 }
 
+export interface CategorizedPhotos {
+  exterior: string | null;
+  interior: string | null;
+  onsen: string | null;
+  sauna: string | null;
+  food: string | null;
+  drink: string | null;
+}
+
+export function isCategorizedPhotos(photos: unknown): photos is CategorizedPhotos {
+  return !!photos && typeof photos === "object" && !Array.isArray(photos) && "exterior" in photos;
+}
+
+export function getFirstPhoto(photos: string[] | CategorizedPhotos | null): string | null {
+  if (!photos) return null;
+  if (Array.isArray(photos)) return photos[0] || null;
+  return photos.exterior || photos.interior || photos.onsen || photos.sauna || photos.food || photos.drink || null;
+}
+
 export interface Sauna {
   id: string;
   place_id: string;
@@ -17,7 +36,7 @@ export interface Sauna {
   phone: string | null;
   website: string | null;
   opening_hours: Record<string, string>[] | null;
-  photos: string[] | null;
+  photos: string[] | CategorizedPhotos | null;
   google_reviews: GoogleReview[] | null;
   ai_summary: string | null;
   honmono_score: number | null;
