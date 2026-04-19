@@ -10,7 +10,8 @@ const HONMONO_SERIES = [
     name_en: "Arifu (Amazon Real Filter Search)",
     desc_ja: "Amazonで本物の商品を見つける",
     desc_en: "Find authentic products on Amazon",
-    href: "https://arifu.vercel.app",
+    href: null as string | null,
+    comingSoon: true,
   },
   {
     emoji: "🧪",
@@ -58,22 +59,42 @@ export default function Footer() {
             {isEn ? "HONMONO Series" : "HONMONOシリーズ"}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {HONMONO_SERIES.map((s) => (
-              <a
-                key={s.href}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block rounded-lg p-3 border border-white/15 hover:border-amber-400 hover:bg-white/5 transition-colors"
-              >
-                <p className="text-white text-base font-bold mb-0.5">
-                  {s.emoji} {isEn ? s.name_en : s.name_ja}
-                </p>
-                <p className="text-white/50 text-xs leading-snug">
-                  {isEn ? s.desc_en : s.desc_ja}
-                </p>
-              </a>
-            ))}
+            {HONMONO_SERIES.map((s) => {
+              if (s.comingSoon || !s.href) {
+                return (
+                  <div
+                    key={s.name_ja}
+                    className="block rounded-lg p-3 border border-white/10 opacity-50 cursor-not-allowed relative"
+                  >
+                    <span className="absolute top-2 right-2 text-[9px] font-bold uppercase tracking-wider bg-white/10 text-white/40 px-1.5 py-0.5 rounded-full">
+                      {isEn ? "Coming Soon" : "近日公開"}
+                    </span>
+                    <p className="text-white/60 text-base font-bold mb-0.5">
+                      {s.emoji} {isEn ? s.name_en : s.name_ja}
+                    </p>
+                    <p className="text-white/30 text-xs leading-snug">
+                      {isEn ? s.desc_en : s.desc_ja}
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <a
+                  key={s.name_ja}
+                  href={s.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block rounded-lg p-3 border border-white/15 hover:border-amber-400 hover:bg-white/5 transition-colors"
+                >
+                  <p className="text-white text-base font-bold mb-0.5">
+                    {s.emoji} {isEn ? s.name_en : s.name_ja}
+                  </p>
+                  <p className="text-white/50 text-xs leading-snug">
+                    {isEn ? s.desc_en : s.desc_ja}
+                  </p>
+                </a>
+              );
+            })}
           </div>
         </div>
 

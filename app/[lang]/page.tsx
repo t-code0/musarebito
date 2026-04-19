@@ -319,9 +319,10 @@ export default function HomePage() {
               name_en: "Arifu (Amazon Real Filter Search)",
               desc_ja: "AIがAmazonの商品レビューを分析。サクラレビューを見破り、本物の高評価商品だけを表示。",
               desc_en: "AI analyzes Amazon reviews to detect fake ratings and surface only genuinely top-rated products.",
-              href: "https://arifu.vercel.app",
-              cta_ja: "商品を探す",
-              cta_en: "Search products",
+              href: null as string | null,
+              cta_ja: "近日公開",
+              cta_en: "Coming Soon",
+              comingSoon: true,
             },
             {
               icon: "🧪",
@@ -364,8 +365,14 @@ export default function HomePage() {
               cta_en: "Find shops",
             },
           ] as const).map((s) => {
+            const isComingSoon = "comingSoon" in s && s.comingSoon;
             const inner = (
               <>
+                {isComingSoon && (
+                  <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white/50 px-2 py-0.5 rounded-full">
+                    {lang === "en" ? "Coming Soon" : "近日公開"}
+                  </span>
+                )}
                 <div className="text-3xl mb-2">{s.icon}</div>
                 <h3 className="font-bold text-white mb-2 text-sm">
                   {lang === "en" ? s.name_en : s.name_ja}
@@ -373,13 +380,30 @@ export default function HomePage() {
                 <p className="text-xs text-white/50 flex-1 leading-relaxed">
                   {lang === "en" ? s.desc_en : s.desc_ja}
                 </p>
-                <span className={`mt-3 inline-block text-sm font-bold ${s.href ? "text-amber-400" : "text-green-400"}`}>
+                <span className={`mt-3 inline-block text-sm font-bold ${isComingSoon ? "text-white/30" : s.href ? "text-amber-400" : "text-green-400"}`}>
                   {s.href
                     ? `${lang === "en" ? s.cta_en : s.cta_ja} →`
                     : (lang === "en" ? s.cta_en : s.cta_ja)}
                 </span>
               </>
             );
+
+            // Coming soon: disabled card
+            if (isComingSoon) {
+              return (
+                <div
+                  key={s.name_ja}
+                  className="rounded-2xl p-5 text-center flex flex-col relative opacity-50 cursor-not-allowed"
+                  style={{
+                    background: "linear-gradient(160deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.05) 100%)",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.5), inset 0 2px 0 rgba(255,255,255,0.1)",
+                  }}
+                >
+                  {inner}
+                </div>
+              );
+            }
 
             if (s.href) {
               return (
@@ -400,6 +424,7 @@ export default function HomePage() {
               );
             }
 
+            // Current site highlight
             return (
               <div
                 key={s.name_ja}
