@@ -9,6 +9,19 @@ import AdSlot from "@/components/AdSlot";
 import { Sauna, Review, getFirstPhoto } from "@/types/sauna";
 import { t, normalizeLang, type Lang } from "@/lib/i18n";
 
+const LOYLY_TYPE_EN: Record<string, string> = {
+  "アウフグース": "Aufguss",
+  "セルフロウリュ": "Self Löyly",
+  "オートロウリュ": "Auto Löyly",
+  "アロマロウリュ": "Aroma Löyly",
+  "なし": "None",
+};
+
+function translateLoylyType(value: string, lang: string): string {
+  if (lang !== "en") return value;
+  return LOYLY_TYPE_EN[value] || value.replace(/ロウリュ/g, "Löyly").replace(/アウフグース/g, "Aufguss");
+}
+
 interface VoteTally {
   up: number;
   down: number;
@@ -270,7 +283,7 @@ export default function SaunaDetailPage() {
                 </button>
                 {photoList.length > 1 && (
                   <div className="grid grid-cols-5 gap-1.5 mt-2">
-                    {photoList.slice(1, 6).map((photo, i) => (
+                    {photoList.slice(1, 10).map((photo, i) => (
                       <button key={i} onClick={() => setLightbox({ urls: photoList, idx: i + 1 })}>
                         <img src={photo} alt={`${sauna.name} ${i + 2}`}
                           className="w-full h-16 md:h-20 object-cover rounded-md hover:opacity-80 transition"
@@ -441,7 +454,7 @@ export default function SaunaDetailPage() {
                 facts.loyly_type && {
                   emoji: "♨️",
                   label: t("detail_facts_loyly", lang),
-                  value: facts.loyly_type,
+                  value: translateLoylyType(facts.loyly_type, lang),
                 },
               ].filter(Boolean) as { emoji: string; label: string; value: string }[];
               if (items.length === 0) return null;
@@ -499,7 +512,7 @@ export default function SaunaDetailPage() {
                 {sauna.rating && (
                   <div className="flex gap-3">
                     <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_rating", lang)}</dt>
-                    <dd className="text-[#D97706] font-medium text-sm">★ {sauna.rating}</dd>
+                    <dd className="text-[#D97706] font-medium text-sm">⭐ {sauna.rating}</dd>
                   </div>
                 )}
                 {sauna.opening_hours && (
@@ -551,7 +564,7 @@ export default function SaunaDetailPage() {
                   {reviews.map((review) => (
                     <div key={review.id} className="border-b border-gray-100 pb-4 last:border-0">
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-amber-400">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+                        <span>{"⭐".repeat(review.rating)}<span className="opacity-30">{"⭐".repeat(5 - review.rating)}</span></span>
                         <span className="text-xs text-gray-500">{new Date(review.created_at).toLocaleDateString("ja-JP")}</span>
                         {adminKey && (
                           <button

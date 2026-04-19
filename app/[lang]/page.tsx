@@ -319,7 +319,7 @@ export default function HomePage() {
               name_en: "Arifu (Amazon Real Filter Search)",
               desc_ja: "AIがAmazonの商品レビューを分析。サクラレビューを見破り、本物の高評価商品だけを表示。",
               desc_en: "AI analyzes Amazon reviews to detect fake ratings and surface only genuinely top-rated products.",
-              href: "https://arisa.vercel.app",
+              href: "https://arifu.vercel.app",
               cta_ja: "商品を探す",
               cta_en: "Search products",
             },

@@ -213,17 +213,16 @@ export async function getPlaceDetail(placeId: string, websiteUrl?: string) {
       } catch { /* skip */ }
     }
   }
-  // Pick 6 evenly, then try to find sauna photo and put it first
+  // Pick up to 10, then try to find sauna photo and put it first
   let photos: string[] | null = null;
   if (googleUrls.length > 0) {
-    const picked = pickEvenly(googleUrls, 6);
+    const picked = pickEvenly(googleUrls, 10);
     try {
       const saunaIdx = await findSaunaPhotoIndex(googleUrls);
       if (saunaIdx !== null) {
         const saunaUrl = googleUrls[saunaIdx];
-        // Put sauna photo first, then fill with others (no duplicates)
         const rest = picked.filter(u => u !== saunaUrl);
-        photos = [saunaUrl, ...rest].slice(0, 6);
+        photos = [saunaUrl, ...rest].slice(0, 10);
       } else {
         photos = picked;
       }

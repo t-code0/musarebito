@@ -48,7 +48,7 @@ export default function SaunaCard({ sauna, lang }: Props) {
         <div className="flex items-center gap-1 mt-1">
           {sauna.rating && (
             <>
-              <span className="text-[#D97706] text-[10px] sm:text-xs">★</span>
+              <span className="text-[10px] sm:text-xs">⭐</span>
               <span className="text-[10px] sm:text-xs font-medium">{sauna.rating}</span>
             </>
           )}

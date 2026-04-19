@@ -10,7 +10,7 @@ const HONMONO_SERIES = [
     name_en: "Arifu (Amazon Real Filter Search)",
     desc_ja: "Amazonで本物の商品を見つける",
     desc_en: "Find authentic products on Amazon",
-    href: "https://arisa.vercel.app",
+    href: "https://arifu.vercel.app",
   },
   {
     emoji: "🧪",

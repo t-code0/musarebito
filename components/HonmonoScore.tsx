@@ -120,7 +120,7 @@ export default function HonmonoScore({ score, detail }: Props) {
         })}
       </div>
 
-      {detail.explanation && (
+      {detail.explanation && !isEn && (
         <p className="mt-4 text-sm text-white/70 bg-white/10 rounded-lg p-3">
           {detail.explanation}
         </p>

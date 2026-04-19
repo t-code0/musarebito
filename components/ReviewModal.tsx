@@ -98,7 +98,7 @@ export default function ReviewModal({ saunaId, onClose, onSubmitted }: Props) {
             <div className="flex gap-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <button key={star} type="button" onClick={() => setRating(star)}
-                  className={`text-3xl ${star <= rating ? "text-[#D97706]" : "text-gray-300"}`}>★</button>
+                  className={`text-3xl ${star <= rating ? "" : "opacity-30"}`}>⭐</button>
               ))}
             </div>
           </div>
