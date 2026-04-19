@@ -267,7 +267,7 @@ export async function generateFoodInfo(
 }
 
 /** Score algorithm version — bump when logic changes to trigger batch rescore */
-export const SCORE_VERSION = 2;
+export const SCORE_VERSION = 3;
 
 interface PerformerBonusInput {
   count: number;
@@ -278,7 +278,132 @@ export interface CategoryBreakdown {
   [cat: string]: { base: number; facts: number; performer: number; floor: number; final: number };
 }
 
-/** Data-driven score calculation v2 — 6 categories × max 17, total capped at 100 */
+/**
+ * Whitelist of famous sauna facilities per prefecture.
+ * Matched facilities are guaranteed a minimum overall score of 75 (S rank).
+ * Uses substring matching against facility name.
+ */
+const FAMOUS_SAUNA_WHITELIST: string[] = [
+  // 北海道
+  "ニコーリフレ", "SPA & SAUNA オスパー", "森林公園温泉きよら",
+  // 青森
+  "青森センターホテル",
+  // 岩手
+  "喜盛の湯",
+  // 宮城
+  "スパメッツァ仙台", "スパメッツァ 仙台", "竜泉寺の湯 仙台",
+  // 秋田
+  "ユーランドホテル八橋", "ユーランド ホテル八橋",
+  // 山形
+  "高源ゆ",
+  // 福島
+  "みなとや", "MINATOYA SAUNA",
+  // 茨城
+  "ゆるうむ",
+  // 栃木
+  "グランドスパ南大門",
+  // 群馬
+  "白井屋ホテル", "SHIROIYA",
+  // 埼玉
+  "おふろcafe utatane", "おふろcafé utatane",
+  // 千葉
+  "スパメッツァおおたか", "竜泉寺の湯 流山",
+  // 東京
+  "かるまる池袋", "渋谷SAUNAS", "サウナ東京", "サウナラボ神田",
+  "北欧", "黄金湯", "ドシー五反田", "ドシー恵比寿",
+  "ニューウイング", "松本湯", "ROOFTOP",
+  // 神奈川
+  "スカイスパYOKOHAMA", "スカイスパ YOKOHAMA", "朝日湯源泉 ゆいる",
+  // 新潟
+  "サウナ宝来洲", "ホライズン",
+  // 長野
+  "The Sauna",
+  // 富山
+  "The Hive SAUNA", "Hive SAUNA",
+  // 石川
+  "LINNAS Kanazawa",
+  // 福井
+  "ゆけむり温泉 ゆ～遊", "ゆけむり温泉 ゆ〜遊", "ゆけむり温泉ゆー遊", "ゆけむり温泉 ゆー遊",
+  // 山梨
+  "ふじやま温泉",
+  // 岐阜
+  "大垣サウナ",
+  // 静岡
+  "サウナしきじ",
+  // 愛知
+  "ウェルビー栄", "ウェルビー今池", "サウナラボ名古屋", "IE:SAUNA",
+  // 三重
+  "玉の湯",
+  // 滋賀
+  "草津湯元 水春",
+  // 京都
+  "ルーマプラザ", "白山湯",
+  // 大阪
+  "サウナDESSE", "大阪サウナDESSE",
+  // 兵庫
+  "神戸サウナ&スパ", "神戸サウナ＆スパ", "神戸クアハウス",
+  // 奈良
+  "奈良健康ランド",
+  // 和歌山
+  "ふくろうの湯",
+  // 鳥取
+  "ラピスパ",
+  // 島根
+  "四季荘",
+  // 岡山
+  "後楽温泉ほのかの湯", "後楽温泉 ほのかの湯",
+  // 広島
+  "ニュージャパン", "ニュージャパンEX",
+  // 山口
+  "くだまつ健康パーク",
+  // 徳島
+  "あらたえの湯",
+  // 香川
+  "琴弾廻廊",
+  // 愛媛
+  "喜助の湯",
+  // 高知
+  "SAUNAグリンピア", "グリンピア",
+  // 福岡
+  "ウェルビー福岡", "ウェルビー 福岡", "ROUTE 8", "らかん温泉",
+  // 佐賀
+  "らかんの湯", "御船山楽園ホテル",
+  // 長崎
+  "MINATO SAUNA",
+  // 熊本
+  "湯らっくす",
+  // 大分
+  "寒の地獄旅館",
+  // 宮崎
+  "サウナMIYAZAKI",
+  // 鹿児島
+  "ニューニシノ",
+  // 沖縄
+  "龍神の湯", "琉球温泉", "KIELO SAUNA",
+  // その他有名施設
+  "サウナ東京八戸", "延羽の湯", "水春松井山手",
+];
+
+/** Check if a facility name matches the famous sauna whitelist.
+ * Uses normalized comparison (spaces removed) for robust matching. */
+function isWhitelisted(name: string): boolean {
+  const norm = (s: string) => s.replace(/[\s　]/g, "").toLowerCase();
+  const n = norm(name);
+  return FAMOUS_SAUNA_WHITELIST.some((w) => {
+    const nw = norm(w);
+    return n.includes(nw) || nw.includes(n);
+  });
+}
+
+/** Advanced keywords that earn extra points (+4~5 each, cumulative) */
+const PREMIUM_KEYWORDS = [
+  "ハーバル", "ヴィヒタ", "アウフグース", "セルフロウリュ", "ケロ",
+  "薪ストーブ", "フィンランド式", "サウナシュラン", "サ道", "しきじの水",
+  "アロマ", "サ活", "オロポ", "ロウリュ", "ウィスキング", "外気浴",
+  "熱波師", "アウフグーサー", "ウィスキングマイスター",
+];
+
+/** Data-driven score calculation v3 — 6 categories × max 17, total capped at 100 */
 export function calculateHonmonoScoreLocal(input: {
   name: string;
   rating: number | null;
@@ -302,10 +427,27 @@ export function calculateHonmonoScoreLocal(input: {
     return n;
   };
 
+  // === Premium keyword bonus (spread across categories) ===
+  const premiumCount = countKw(PREMIUM_KEYWORDS);
+  const premiumBonus = Math.min(premiumCount * 2, 12); // max +12 total, spread to categories
+
+  // === High-rating bonus (applies to all categories) ===
+  let ratingBonus = 0;
+  if (rating !== null) {
+    if (rating >= 4.5) ratingBonus = 3;
+    else if (rating >= 4.3) ratingBonus = 2;
+  }
+
+  // === Review trust bonus ===
+  let trustBonus = 0;
+  if (reviewCount >= 500) trustBonus = 5;
+  else if (reviewCount >= 200) trustBonus = 3;
+
   // ===== 1. Heat Quality (max 17) =====
   const heatKw = ["熱波","アウフグース","ロウリュイベント","熱波師","セルフロウリュ","オートロウリュ","薪サウナ","バレルサウナ","ハーバルサウナ","薬草サウナ"];
-  let heatBase = Math.min(countKw(heatKw) * 2, 6);
+  let heatBase = Math.min(countKw(heatKw) * 2, 8);
   if (/サウナ|SAUNA|Sauna/i.test(name)) heatBase += 3;
+  heatBase += ratingBonus;
   let heatFacts = 0;
   if (facts) {
     if (facts.sauna_temp_c != null) {
@@ -314,17 +456,18 @@ export function calculateHonmonoScoreLocal(input: {
       else if (facts.sauna_temp_c >= 70) heatFacts += 1;
     }
     if (facts.loyly_type && facts.loyly_type !== "なし") {
-      heatFacts += facts.loyly_type.includes("アウフグース") ? 2 : 1;
+      heatFacts += facts.loyly_type.includes("アウフグース") ? 3 : 1;
     }
   }
   let heatPerf = 0;
   if (perf) {
-    if (perf.count >= 10) heatPerf = 6;
-    else if (perf.count >= 5) heatPerf = 3;
+    if (perf.count >= 10) heatPerf = 7;
+    else if (perf.count >= 5) heatPerf = 4;
     else if (perf.count >= 2) heatPerf = 2;
+    if (perf.hasLeaderOrOwner) heatPerf += 1;
   }
   let heat = Math.min(heatBase + heatFacts + heatPerf, 17);
-  const heatFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 5 : 3) : 0;
+  const heatFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 6 : 3) : 0;
   heat = Math.max(heat, heatFloor);
 
   // ===== 2. Cold Bath / Water Bath (max 17) =====
@@ -333,14 +476,21 @@ export function calculateHonmonoScoreLocal(input: {
   else if (reviewCount >= 200) coldBase += 3;
   else if (reviewCount >= 50) coldBase += 2;
   else if (reviewCount >= 10) coldBase += 1;
+  coldBase += ratingBonus;
   let coldFacts = 0;
   if (facts && facts.water_bath_temp_c != null) {
-    if (facts.water_bath_temp_c <= 17) coldFacts = 3;
+    if (facts.water_bath_temp_c <= 14) coldFacts = 4;
+    else if (facts.water_bath_temp_c <= 17) coldFacts = 3;
     else if (facts.water_bath_temp_c <= 20) coldFacts = 2;
     else coldFacts = 1;
   }
-  let cold = Math.min(coldBase + coldFacts, 17);
-  const coldFloor = rating !== null && rating >= 3.5 ? 5 : 0;
+  let coldPerf = 0;
+  if (perf) {
+    if (perf.count >= 10) coldPerf = 2;
+    else if (perf.count >= 5) coldPerf = 1;
+  }
+  let cold = Math.min(coldBase + coldFacts + coldPerf, 17);
+  const coldFloor = rating !== null && rating >= 3.5 ? 6 : 0;
   cold = Math.max(cold, coldFloor);
 
   // ===== 3. Outdoor Air (max 17) =====
@@ -354,13 +504,14 @@ export function calculateHonmonoScoreLocal(input: {
   else if (reviewCount >= 1) outBase = 2;
   const outKw = ["外気浴","露天","ととのい椅子","デッキチェア","インフィニティチェア"];
   outBase += Math.min(countKw(outKw) * 2, 4);
+  outBase += ratingBonus;
   let outFacts = 0;
   if (facts && facts.has_outside_air === true) outFacts = 5;
   let outPerf = 0;
-  if (perf && perf.count >= 5) outPerf = 2;
+  if (perf && perf.count >= 5) outPerf = 3;
   else if (perf && perf.count >= 2) outPerf = 1;
   let outdoor = Math.min(outBase + outFacts + outPerf, 17);
-  const outFloor = hasSignal ? 2 : 0;
+  const outFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 4 : 2) : 0;
   outdoor = Math.max(outdoor, outFloor);
 
   // ===== 4. Cleanliness (max 17) =====
@@ -368,25 +519,26 @@ export function calculateHonmonoScoreLocal(input: {
   if (hasWebsite) cleanBase += 3;
   if (reviewCount >= 10) cleanBase += 2;
   if (reviewCount >= 100 && rating !== null && rating >= 3.5) cleanBase += 2;
-  // Rating bonus
   if (rating !== null) {
     if (rating >= 4.5) cleanBase += 5;
     else if (rating >= 4.0) cleanBase += 3;
     else if (rating >= 3.5) cleanBase += 1;
   }
+  cleanBase += ratingBonus;
   const cleanKw = ["清潔","きれい","綺麗","清掃","掃除"];
   cleanBase += Math.min(Math.floor(countKw(cleanKw) * 1.5), 3);
   let cleanPerf = 0;
-  if (perf && perf.count >= 10) cleanPerf = 3;
-  else if (perf && perf.count >= 5) cleanPerf = 2;
+  if (perf && perf.count >= 10) cleanPerf = 4;
+  else if (perf && perf.count >= 5) cleanPerf = 3;
   else if (perf && perf.count >= 2) cleanPerf = 1;
   let clean = Math.min(cleanBase + cleanPerf, 17);
-  const cleanFloor = hasSignal ? 3 : 0;
+  const cleanFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 5 : 3) : 0;
   clean = Math.max(clean, cleanFloor);
 
   // ===== 5. Aroma & Löyly (max 17) =====
   const aromaKw = ["アロマ","ハーブ","ハーバル","ヴィヒタ","白樺","ロウリュ","セルフロウリュ","薬草","ウィスキング","アロマロウリュ"];
-  const aromaBase = Math.min(countKw(aromaKw) * 2, 6);
+  let aromaBase = Math.min(countKw(aromaKw) * 2, 8);
+  aromaBase += ratingBonus;
   let aromaFacts = 0;
   if (facts && facts.loyly_type && facts.loyly_type !== "なし") {
     const lt = facts.loyly_type;
@@ -396,16 +548,21 @@ export function calculateHonmonoScoreLocal(input: {
     else aromaFacts = 2;
   }
   let aromaPerf = 0;
-  if (perf && perf.count >= 5) aromaPerf = 4;
-  else if (perf && perf.count >= 2) aromaPerf = 2;
+  if (perf) {
+    if (perf.count >= 10) aromaPerf = 5;
+    else if (perf.count >= 5) aromaPerf = 4;
+    else if (perf.count >= 2) aromaPerf = 2;
+    if (perf.hasLeaderOrOwner) aromaPerf += 1;
+  }
   let aroma = Math.min(aromaBase + aromaFacts + aromaPerf, 17);
-  const aromaFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 5 : 3) : 0;
+  const aromaFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 6 : 3) : 0;
   aroma = Math.max(aroma, aromaFloor);
 
   // ===== 6. Sauna Focus (max 17) =====
   const focusKw = ["水風呂","岩盤浴","炭酸泉","休憩","ととのい"];
   let focusBase = Math.min(countKw(focusKw) * 2, 6);
   if (/サウナ|SAUNA|Sauna/i.test(name)) focusBase += 3;
+  focusBase += ratingBonus;
   let focusFacts = 0;
   if (facts) {
     let factFields = 0;
@@ -413,27 +570,93 @@ export function calculateHonmonoScoreLocal(input: {
     if (facts.water_bath_temp_c != null) factFields++;
     if (facts.has_outside_air != null) factFields++;
     if (facts.loyly_type) factFields++;
-    focusFacts = Math.min(factFields, 2);
+    focusFacts = Math.min(factFields, 3);
   }
   let focusPerf = 0;
   if (perf) {
-    if (perf.count >= 5) focusPerf += 4;
+    if (perf.count >= 10) focusPerf += 5;
+    else if (perf.count >= 5) focusPerf += 4;
     else if (perf.count >= 2) focusPerf += 2;
     if (perf.hasLeaderOrOwner) focusPerf += 2;
   }
   let focus = Math.min(focusBase + focusFacts + focusPerf, 17);
-  const focusFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 6 : 4) : 0;
+  const focusFloor = hasSignal ? (rating !== null && rating >= 3.5 ? 7 : 4) : 0;
   focus = Math.max(focus, focusFloor);
+
+  // ===== Premium keyword spread (distribute evenly across 6 cats) =====
+  if (premiumBonus > 0) {
+    const perCat = Math.floor(premiumBonus / 6);
+    const remainder = premiumBonus % 6;
+    const cats = [heat, cold, outdoor, clean, aroma, focus];
+    for (let i = 0; i < 6; i++) {
+      cats[i] = Math.min(cats[i] + perCat + (i < remainder ? 1 : 0), 17);
+    }
+    [heat, cold, outdoor, clean, aroma, focus] = cats;
+  }
+
+  // ===== Trust bonus spread (distribute to weaker categories) =====
+  if (trustBonus > 0) {
+    const cats = [
+      { val: heat, idx: 0 }, { val: cold, idx: 1 }, { val: outdoor, idx: 2 },
+      { val: clean, idx: 3 }, { val: aroma, idx: 4 }, { val: focus, idx: 5 },
+    ];
+    cats.sort((a, b) => a.val - b.val);
+    let remaining = trustBonus;
+    for (const c of cats) {
+      if (remaining <= 0) break;
+      const add = Math.min(remaining, 17 - c.val);
+      c.val += add;
+      remaining -= add;
+    }
+    const arr = [0, 0, 0, 0, 0, 0];
+    for (const c of cats) arr[c.idx] = c.val;
+    [heat, cold, outdoor, clean, aroma, focus] = arr;
+  }
+
+  // ===== Whitelist guarantee: ensure min 75 for famous facilities =====
+  const whitelisted = isWhitelisted(name);
+  if (whitelisted) {
+    let rawTotal = heat + cold + outdoor + clean + aroma + focus;
+    if (rawTotal < 75) {
+      const deficit = 75 - rawTotal;
+      const cats = [
+        { val: heat, idx: 0 }, { val: cold, idx: 1 }, { val: outdoor, idx: 2 },
+        { val: clean, idx: 3 }, { val: aroma, idx: 4 }, { val: focus, idx: 5 },
+      ];
+      // Boost weaker categories first to create balanced breakdown
+      cats.sort((a, b) => a.val - b.val);
+      let remaining = deficit;
+      for (const c of cats) {
+        if (remaining <= 0) break;
+        const room = 17 - c.val;
+        const add = Math.min(Math.ceil(remaining / cats.filter(x => x.val < 17).length), room, remaining);
+        c.val += add;
+        remaining -= add;
+      }
+      // Second pass for any remainder
+      if (remaining > 0) {
+        for (const c of cats) {
+          if (remaining <= 0) break;
+          const add = Math.min(remaining, 17 - c.val);
+          c.val += add;
+          remaining -= add;
+        }
+      }
+      const arr = [0, 0, 0, 0, 0, 0];
+      for (const c of cats) arr[c.idx] = c.val;
+      [heat, cold, outdoor, clean, aroma, focus] = arr;
+    }
+  }
 
   // ===== Overall (capped at 100) =====
   const overall = Math.min(heat + cold + outdoor + clean + aroma + focus, 100);
 
-  const allKw = [...heatKw, ...outKw, ...cleanKw, ...aromaKw, ...focusKw];
+  const allKw = [...heatKw, ...outKw, ...cleanKw, ...aromaKw, ...focusKw, ...PREMIUM_KEYWORDS];
   const matchedKw = Array.from(new Set(allKw.filter(kw => allText.includes(kw))));
 
   const debug: CategoryBreakdown = {
     heat_quality: { base: heatBase, facts: heatFacts, performer: heatPerf, floor: heatFloor, final: heat },
-    water_bath: { base: coldBase, facts: coldFacts, performer: 0, floor: coldFloor, final: cold },
+    water_bath: { base: coldBase, facts: coldFacts, performer: coldPerf, floor: coldFloor, final: cold },
     outside_air: { base: outBase, facts: outFacts, performer: outPerf, floor: outFloor, final: outdoor },
     cleanliness: { base: cleanBase, facts: 0, performer: cleanPerf, floor: cleanFloor, final: clean },
     authenticity: { base: aromaBase, facts: aromaFacts, performer: aromaPerf, floor: aromaFloor, final: aroma },
