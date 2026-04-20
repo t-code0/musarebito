@@ -28,8 +28,8 @@ const WHISKERS: WhiskerProfile[] = [
     location_ja: "茨城",
     location_en: "Ibaraki",
     group: "Mahārāja",
-    desc_ja: "世界最古かつ世界三大医学の一つ「アーユルヴェーダ」と、バルト三国リトアニアより習得したサウナセラピー「ウィスキング」、世界のヒーリング技術を掛け合わせた唯一無二のサウナセラピーを行う。",
-    desc_en: 'Combines Ayurveda — one of the world\'s oldest and three great medical traditions — with sauna therapy "whisking" learned in Lithuania, and global healing techniques to deliver a one-of-a-kind sauna therapy experience.',
+    desc_ja: "茨城を拠点に活動する、Mahārājaのメインウィスカー。世界最古の医学体系アーユルヴェーダと、バルト三国リトアニアで習得したウィスキング、世界各地のヒーリング技術を一つの施術として織り上げる。Mahārājaが運営する1ヘクタールのハーブガーデン『Maharani herb eden』で育てた50種類以上の薬草を、その日の受け手の状態に合わせて調合。植物の香り・熱・触感が幾重にも重なる圧倒的な蒸気浴体験で、全国の温浴施設から引っ張りだこの幻の施術者。",
+    desc_en: "Mahārāja's lead whisker, based in Ibaraki. She weaves Ayurveda — the world's oldest medical system — with whisking learned in Lithuania and healing techniques from around the globe into a single, seamless treatment. Using over 50 varieties of medicinal herbs grown at Mahārāja's own one-hectare herb garden 'Maharani herb eden,' she custom-blends botanicals to match each guest's condition that day. The result is an overwhelming steam-bathing experience where plant fragrance, heat, and touch layer upon one another — making her one of Japan's most sought-after whiskers.",
     instagram: [
       { url: "https://www.instagram.com/zenspa1118/", label: "@zenspa1118" },
       { url: "https://www.instagram.com/maharaja__ritual/", label: "@maharaja__ritual" },
@@ -44,8 +44,8 @@ const WHISKERS: WhiskerProfile[] = [
     group: "Mahārāja",
     facility_ja: "3un",
     facility_en: "3un",
-    desc_ja: "茨城の極熱サウナ「3un」を運営。ラトビアから直輸入した白樺・オークの若枝を用いたフィンランド式ウィスキングを平日1〜2名限定でパーソナル提供。低温サウナ室での施術・指圧マッサージ・オイルトリートメント・水風呂フローティング・シンギングボウル倍音浴まで含む約50〜60分の極快ウィスキングセッション。",
-    desc_en: 'Operates "3un," an extreme heat sauna in Ibaraki. Offers personal Finnish-style whisking sessions limited to 1–2 guests on weekdays, using birch and oak branches imported directly from Latvia. Sessions include shiatsu massage, oil treatment, cold bath floating, and singing bowl overtone bathing — approximately 50–60 minutes of total immersion.',
+    desc_ja: "茨城の極熱サウナ『3un』を営むMahārājaウィスカー。ラトビアから直輸入する白樺・オークの若枝を自ら選び抜き、フィンランド式ウィスキングを平日1〜2名の完全パーソナルで提供する。低温サウナ室で50〜60分かけて丁寧にレイルを重ね、指圧・水風呂フローティング・シンギングボウルの倍音までを一つの流れに編み込む施術は、『ととのう』の先にある別次元の快を引き出すと評判。",
+    desc_en: "A Mahārāja whisker who runs '3un,' an extreme-heat sauna in Ibaraki. He hand-selects birch and oak branches imported directly from Latvia and offers Finnish-style whisking as a fully personal session for just 1–2 guests on weekdays. Over 50–60 minutes in a low-temperature sauna room, he carefully layers leili upon leili, weaving shiatsu, cold-bath floating, and singing-bowl overtones into a single flow — a treatment renowned for unlocking a dimension of bliss beyond mere 'totonou.'",
     instagram: [
       { url: "https://www.instagram.com/3un_sauna/", label: "@3un_sauna" },
       { url: "https://www.instagram.com/maharaja__ritual/", label: "@maharaja__ritual" },
@@ -264,7 +264,7 @@ export default function WhiskerPage() {
           <a href={`/${lang}`} className="text-green-300 hover:text-white text-sm mb-2 inline-block">
             {isEn ? "← Back to Home" : "← トップに戻る"}
           </a>
-          <h1 className="text-3xl font-bold text-white">🌿 {isEn ? "Whisker Directory" : "ウィスカー一覧"}</h1>
+          <h1 className="text-3xl font-bold text-white">🌿 {isEn ? "Whiskers" : "ウィスカー"}</h1>
           <p className="text-green-200/70 text-sm mt-2">
             {isEn ? "Japanese whisking therapists — masters of the birch branch ritual" : "日本のウィスキング施術者たち"}
           </p>

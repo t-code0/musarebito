@@ -19,8 +19,8 @@ const prefectures: { ja: string; en: string }[] = [
 const contentCards: { icon: string; title_ja: string; title_en: string; desc_ja: string; desc_en: string; href: string; comingSoon?: boolean }[] = [
   {
     icon: "🔥",
-    title_ja: "アウフグーサー(熱波師)一覧",
-    title_en: "Aufgusser (Heat-Wave Master) List",
+    title_ja: "グーサー",
+    title_en: "Aufgussers",
     desc_ja: "全国の熱波師を探す",
     desc_en: "Find aufguss masters across Japan",
     href: "/aufgusser",
@@ -28,7 +28,7 @@ const contentCards: { icon: string; title_ja: string; title_en: string; desc_ja:
   {
     icon: "🌿",
     title_ja: "ウィスカー",
-    title_en: "Whisking Experience",
+    title_en: "Whiskers",
     desc_ja: "ウィスキング体験を探す",
     desc_en: "Find whisking experiences",
     href: "/whisker",
