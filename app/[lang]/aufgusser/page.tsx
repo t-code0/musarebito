@@ -50,7 +50,7 @@ export default function AufgusserPage() {
             🔥 {isEn ? "Aufgussers" : "グーサー"}
           </h1>
           <p className="text-red-200/70 text-sm mt-2">
-            {isEn ? "Japan's heat-wave masters" : "日本を代表するグーサーたち"}
+            {isEn ? "Japan's leading Aufgussers" : "日本を代表する熱波師たち"}
           </p>
         </div>
       </div>
