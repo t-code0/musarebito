@@ -32,7 +32,6 @@ const contentCards: { icon: string; title_ja: string; title_en: string; desc_ja:
     desc_ja: "ウィスキング体験を探す",
     desc_en: "Find whisking experiences",
     href: "/whisker",
-    comingSoon: true,
   },
   {
     icon: "📸",
