@@ -107,9 +107,9 @@ export default function SaunaInstagramPage() {
                   {labels[acc.category]}
                 </span>
               </div>
-              <h2 className="text-base font-bold text-white mb-1">{acc.name}</h2>
+              <h2 className="text-base font-bold text-white mb-1">{isEn ? acc.name_en : acc.name}</h2>
               <p className="text-xs text-green-300/80 font-mono mb-2">@{acc.handle}</p>
-              <p className="text-sm text-gray-300 leading-relaxed mb-3">{acc.description}</p>
+              <p className="text-sm text-gray-300 leading-relaxed mb-3">{isEn ? acc.description_en : acc.description}</p>
               <span className="inline-block text-xs px-3 py-1.5 rounded-full bg-pink-600/80 text-white font-medium">
                 {isEn ? "View on Instagram" : "Instagramで見る"}
               </span>

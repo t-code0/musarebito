@@ -11,6 +11,53 @@ interface Performer {
   photo_url: string | null;
 }
 
+/** Romanization map for performer names (JA → EN) */
+const NAME_EN: Record<string, string> = {
+  "プレジャー田中": "Pleasure Tanaka",
+  "アウフグースえもん": "Aufguss Emon",
+  "ウェルカム宮": "Welcome Miya",
+  "エスエイト純": "S8 Jun",
+  "エストレージャ洸": "Estrella Kou",
+  "ビーチクキラー前田": "Beach Killer Maeda",
+  "マイケル須藤": "Michael Sudo",
+  "モンスーン赤野": "Monsoon Akano",
+  "りゅーきイケダ": "Ryuki Ikeda",
+  "熱ごり": "Netsugori",
+  "レスキューmotto": "Rescue Motto",
+  "マッソーけいご": "Musso Keigo",
+  "ゆーま": "Yuma",
+  "バイセン大塚": "Baisen Otsuka",
+  "五塔 熱子": "Goto Netsuko",
+  "井上勝正": "Katsumasa Inoue",
+  "鮭山未菜美": "Sakeyama Minami",
+  "エレガント渡会": "Elegant Watarai",
+  "箸休めサトシ": "Hashiyasume Satoshi",
+  "レジェンドゆう": "Legend Yu",
+  "永井テツヤ": "Tetsuya Nagai",
+  "鈴木りく": "Riku Suzuki",
+  "岡見": "Okami",
+  "黒川優磨": "Yuma Kurokawa",
+  "佐野マユ香": "Mayuka Sano",
+  "なみきんぐ": "Namiking",
+  "ヤマトタケル": "Yamato Takeru",
+  "ラブ": "Love",
+  "さいき": "Saiki",
+  "まなみん": "Manamin",
+  "よしの": "Yoshino",
+  "ずーみん": "Zumin",
+  "おおむら": "Omura",
+  "さとう": "Sato",
+  "たかの": "Takano",
+  "小島": "Kojima",
+  "藤次": "Fujitsugi",
+  "スター諸星": "Star Morohoshi",
+  "柴田健太郎": "Kentaro Shibata",
+};
+
+function getNameEn(name: string): string {
+  return NAME_EN[name] || name;
+}
+
 export default function AufgusserPage() {
   const params = useParams();
   const lang = (params.lang as string) || "ja";
@@ -96,7 +143,10 @@ export default function AufgusserPage() {
                   boxShadow: "0 4px 12px rgba(0,0,0,0.4), inset 0 2px 0 rgba(255,255,255,0.1)",
                 }}
               >
-                <h3 className="text-lg font-bold text-white mb-2">{p.name}</h3>
+                <h3 className="text-lg font-bold text-white mb-1">{isEn ? getNameEn(p.name) : p.name}</h3>
+                {isEn && getNameEn(p.name) !== p.name && (
+                  <p className="text-xs text-white/40 mb-2">{p.name}</p>
+                )}
                 <p className="text-sm text-gray-300 leading-relaxed mb-3">{p.description}</p>
                 <div className="flex items-center gap-3">
                   <a

@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 
 interface WhiskerProfile {
   name: string;
+  name_en: string;
   subtitle_ja: string;
   subtitle_en: string;
   location_ja: string;
@@ -23,6 +24,7 @@ const WHISKERS: WhiskerProfile[] = [
   // === Mahārāja ===
   {
     name: "AYAKA",
+    name_en: "AYAKA",
     subtitle_ja: "伝統療法と蒸気浴でヒトを元気にする人",
     subtitle_en: "Healing through traditional therapy and steam bathing",
     location_ja: "茨城",
@@ -37,6 +39,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "鈴木翔",
+    name_en: "Sho Suzuki",
     subtitle_ja: "85歳が創る茨城極熱サウナ「3un」運営／ウィスキング×アーユルヴェーダセラピー",
     subtitle_en: 'Operator of "3un" — Ibaraki\'s extreme heat sauna / Whisking × Ayurveda therapy',
     location_ja: "茨城",
@@ -56,6 +59,7 @@ const WHISKERS: WhiskerProfile[] = [
   // === Progress ===
   {
     name: "道東サウナ小僧",
+    name_en: "Doto Sauna Kozo",
     subtitle_ja: "道東をこよなく愛するサウナ小僧／ウィスキングマイスター",
     subtitle_en: "Whisking meister based in Eastern Hokkaido",
     location_ja: "北海道斜里郡斜里町ウトロ",
@@ -69,6 +73,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "キリ",
+    name_en: "Kiri",
     subtitle_ja: "14世帯の限界集落を健康ランドに／蒸‐五箇サウナ‐運営",
     subtitle_en: "Turning a 14-household village into a wellness destination",
     location_ja: "京都府京丹後市",
@@ -84,6 +89,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "カジ",
+    name_en: "Kaji",
     subtitle_ja: "丹後サウナ／ぬかとゆげ立ち上げメンバー",
     subtitle_en: "Co-founder of Nuka to Yuge sauna, Tango region",
     location_ja: "京都府京丹後市",
@@ -98,6 +104,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "ミーチカ",
+    name_en: "Michka",
     subtitle_ja: "Progress女性プロ修了1号生／女性施術のスペシャリスト",
     subtitle_en: "First female Pro graduate of Progress / Women's session specialist",
     location_ja: "東京都",
@@ -112,6 +119,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "む〜みん",
+    name_en: "Moomin",
     subtitle_ja: "Progressプロ男性1号生／シンギングボウル認定プレーヤー",
     subtitle_en: "First male Pro graduate of Progress / Certified singing bowl player",
     location_ja: "茨城県常総市",
@@ -126,6 +134,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "はまもん",
+    name_en: "Hamamon",
     subtitle_ja: "新潟初の女性ウィスキングマイスター",
     subtitle_en: "Niigata's first female whisking meister",
     location_ja: "新潟県",
@@ -140,6 +149,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "カズ",
+    name_en: "Kazu",
     subtitle_ja: "北陸初の常設ウィスキングを目指すマイスター",
     subtitle_en: "Meister pursuing Hokuriku's first permanent whisking venue",
     location_ja: "富山・石川",
@@ -154,6 +164,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "武内祐美",
+    name_en: "Yumi Takeuchi",
     subtitle_ja: "セラピスト／Family Bath Master認定（リトアニア）",
     subtitle_en: "Therapist / Family Bath Master certified (Lithuania)",
     location_ja: "千葉・神奈川",
@@ -169,6 +180,7 @@ const WHISKERS: WhiskerProfile[] = [
   // === 日本ウィスキングクラブ ===
   {
     name: "松田純子",
+    name_en: "Junko Matsuda",
     subtitle_ja: "日本ウィスキングクラブ代表／SAUNASウィスキングアドバイザー",
     subtitle_en: "President, Japan Whisking Club / SAUNAS Whisking Advisor",
     location_ja: "東京（渋谷・高輪・神田）",
@@ -184,6 +196,7 @@ const WHISKERS: WhiskerProfile[] = [
   // === しらかばスポーツ ===
   {
     name: "マグ万平",
+    name_en: "Mag Manpei",
     subtitle_ja: "サウナ芸人／しらかばスポーツ所属",
     subtitle_en: "Sauna comedian / Shirakaba Sports member",
     location_ja: "東京／全国",
@@ -196,6 +209,7 @@ const WHISKERS: WhiskerProfile[] = [
   },
   {
     name: "くろだっこ",
+    name_en: "Kurodakko",
     subtitle_ja: "天空のウィスキングキャプテン／施術件数日本一",
     subtitle_en: "Whisking Captain of the Sky / Japan's #1 in session count",
     location_ja: "東京（笹塚）",
@@ -212,6 +226,7 @@ const WHISKERS: WhiskerProfile[] = [
   // === 施設独立系 ===
   {
     name: "野田クラクションべべー",
+    name_en: "Noda Klaxon Bebe",
     subtitle_ja: "The Sauna支配人／サウナビルダー",
     subtitle_en: "Manager of The Sauna / Sauna builder",
     location_ja: "長野県信濃町",
@@ -332,9 +347,9 @@ export default function WhiskerPage() {
             >
               {/* Name + Group Badge */}
               <div className="flex items-start justify-between gap-2 mb-1">
-                <h3 className="text-lg font-bold text-white">{w.name}</h3>
+                <h3 className="text-lg font-bold text-white">{isEn ? w.name_en : w.name}</h3>
                 <span className={`shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full border ${GROUP_COLORS[w.group] || "bg-gray-500/20 text-gray-300 border-gray-500/30"}`}>
-                  {w.group}
+                  {isEn ? (GROUPS.find(g => g.key === w.group)?.en || w.group) : w.group}
                 </span>
               </div>
 
