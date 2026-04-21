@@ -17,7 +17,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: {
     default: "蒸され人 | 全国サウナランキング・本物スコアで探す",
-    template: "%s | 蒸され人",
+    template: "%s | Musarebito",
   },
   description:
     "蒸され人（むされびと）は全国のサウナ施設をGoogleデータに基づいて評価・ランキング。口コミ数・評価・サウナ設備の充実度など複数の指標で「本物スコア」を算出。北海道・東京・神奈川・大阪のサウナ情報を網羅。",
