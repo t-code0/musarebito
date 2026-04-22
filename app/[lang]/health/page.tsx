@@ -1,6 +1,3 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import Link from "next/link";
 
 type HealthCategory = {
@@ -73,9 +70,8 @@ const healthCategories: HealthCategory[] = [
   },
 ];
 
-export default function HealthPage() {
-  const params = useParams();
-  const lang = (params.lang as string) || "ja";
+export default function HealthPage({ params }: { params: { lang: string } }) {
+  const lang = params.lang || "ja";
   const isEn = lang === "en";
 
   return (

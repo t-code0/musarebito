@@ -1,6 +1,3 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import Link from "next/link";
 
 type Term = {
@@ -76,9 +73,8 @@ function getSortedTerms(lang: string): Term[] {
   );
 }
 
-export default function GlossaryPage() {
-  const params = useParams();
-  const lang = (params.lang as string) || "ja";
+export default function GlossaryPage({ params }: { params: { lang: string } }) {
+  const lang = params.lang || "ja";
   const isEn = lang === "en";
   const sortedTerms = getSortedTerms(lang);
 

@@ -1,6 +1,3 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import Link from "next/link";
 
 const steps = [
@@ -61,9 +58,8 @@ const faqs = [
   },
 ];
 
-export default function BeginnersPage() {
-  const params = useParams();
-  const lang = (params.lang as string) || "ja";
+export default function BeginnersPage({ params }: { params: { lang: string } }) {
+  const lang = params.lang || "ja";
   const isEn = lang === "en";
 
   return (
