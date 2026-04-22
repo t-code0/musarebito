@@ -354,8 +354,9 @@ export default function SaunaDetailPage() {
               )}
             </section>
 
-            {/* Food Info */}
+            {/* Food Info — Japanese only (content is Japanese proper nouns) */}
             {(() => {
+              if (lang === "en") return null;
               const fi = sauna.food_info;
               if (!fi) return null;
               const hasRestaurant = fi.restaurant && fi.restaurant !== "不明" && fi.restaurant.trim() !== "";
@@ -515,13 +516,25 @@ export default function SaunaDetailPage() {
                     <dd className="text-[#D97706] font-medium text-sm">⭐ {sauna.rating}</dd>
                   </div>
                 )}
-                {sauna.opening_hours && (
+                {sauna.opening_hours && lang !== "en" && (
                   <div className="flex gap-3">
                     <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_hours", lang)}</dt>
                     <dd className="text-gray-700 text-sm space-y-0.5">
                       {sauna.opening_hours.map((h, i) => (
                         <p key={i}>{typeof h === "object" && "text" in h ? h.text : String(h)}</p>
                       ))}
+                    </dd>
+                  </div>
+                )}
+                {sauna.opening_hours && lang === "en" && (
+                  <div className="flex gap-3">
+                    <dt className="text-gray-500 text-sm font-medium min-w-[100px] shrink-0">{t("detail_info_hours", lang)}</dt>
+                    <dd className="text-gray-700 text-sm">
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sauna.name)}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >Check on Google Maps</a>
                     </dd>
                   </div>
                 )}
@@ -645,7 +658,7 @@ export default function SaunaDetailPage() {
         {/* Share */}
         <div className="flex justify-center gap-4 mb-8 px-4">
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(sauna.name + "の本物スコアは" + (sauna.honmono_score || "?") + "点！ #蒸され人 #サウナ")}&url=${encodeURIComponent("https://musarebito.vercel.app/" + lang + "/sauna/" + encodeURIComponent(prefecture) + "/" + id)}`}
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(lang === "en" ? sauna.name + " HONMONO Score: " + (sauna.honmono_score || "?") + " #Musarebito #Sauna" : sauna.name + "の本物スコアは" + (sauna.honmono_score || "?") + "点！ #蒸され人 #サウナ")}&url=${encodeURIComponent("https://musarebito.vercel.app/" + lang + "/sauna/" + encodeURIComponent(prefecture) + "/" + id)}`}
             target="_blank" rel="noopener noreferrer"
             className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white text-sm hover:opacity-80"
           >X</a>

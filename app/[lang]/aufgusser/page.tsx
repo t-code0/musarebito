@@ -95,6 +95,71 @@ function getNameEn(name: string): string {
   return NAME_EN[name] || name;
 }
 
+/** English descriptions for all 57 performers */
+const DESC_EN: Record<string, string> = {
+  "kuumaもとし": "Association member specializing in Finnish-style Aufguss.",
+  "Re: バース足立": "Elite Aufgusser who competed in the Neppa Koshien tournament.",
+  "アウフグースえもん": "Popular Hokkaido Aufgusser known for entertainment-style performances.",
+  "アンナ": "Popular female Aufgusser active in Hokkaido.",
+  "ウェルカム宮": "Popular Aufgusser active in Hokkaido.",
+  "エスエイト純": "Aufgusser based in Hokkaido.",
+  "エストレージャ洸": "Up-and-coming young Aufgusser active in Hokkaido.",
+  "エターナルあやせ": "Female Aufgusser based in Hokkaido.",
+  "エレガント渡会": "Manager of Sapporo's Niko Refre. Known as 'Japan's most elegant Aufgusser.' Appeared in the drama 'Sa-Do.'",
+  "おかみ": "Aufgusser who competed in Neppa Koshien.",
+  "かほ": "Female Aufgusser active in Hokkaido.",
+  "コウニシパ": "Aufgusser affiliated with the Japan Sauna Neppa Aufguss Association.",
+  "さやか": "Female Aufgusser active in Hokkaido.",
+  "スギちゃん": "Aufgusser who has excelled at Neppa Koshien tournaments.",
+  "スター諸星": "Passionate heat waves that unite the entire venue as one.",
+  "チョモランマ近藤": "Skilled Aufgusser who has competed in Neppa Koshien.",
+  "デトロイト阿久津": "An entertainer who transforms the atmosphere instantly with bright, fun-filled talk.",
+  "なべやん": "Popular Aufgusser who competed in Neppa Koshien.",
+  "ヌッパシヌッシー": "A uniquely styled Aufgusser from Hokkaido.",
+  "バイセン大塚": "Meticulously designs aroma, temperature, and humidity to maximize the power of botanical materials.",
+  "はるか": "Female Aufgusser active in Hokkaido.",
+  "ビーチクキラー前田": "Character-driven Aufgusser from Hokkaido.",
+  "プレジャー田中": "Former owner of the legendary Ginza sauna. Certified Master Aufgusser at Asahikawa Osper. Leader of the 13-member Osper Neppa Squad.",
+  "マイケル須藤": "Aufgusser active in Hokkaido.",
+  "マジシャン熱波師やぎさん": "Popular for entertainment Aufguss performances woven with magic tricks.",
+  "マッソーけいご": "Aufgusser active in Hokkaido.",
+  "まんぷくマサトキ": "Aufgusser who competed in Neppa Koshien.",
+  "みく": "Female Aufgusser active in Hokkaido.",
+  "みじゅ": "Female Aufgusser active in Hokkaido.",
+  "ミッキー山下": "Known for long-throw and acrobatic towel techniques.",
+  "モノマネっぱー吉田": "Popular for entertainment Aufguss with impersonation acts. Based in Hokkaido.",
+  "モンスーン赤野": "Powerful Aufgusser from Hokkaido.",
+  "ゆーま": "Aufgusser based in Hokkaido.",
+  "らん": "Female Aufgusser active in Hokkaido.",
+  "りな": "Female Aufgusser active in Hokkaido.",
+  "りゅーきイケダ": "Aufgusser active in Hokkaido.",
+  "レジェンドゆう": "Versatile, ever-changing heat waves that push you beyond your limits.",
+  "レスキューmotto": "Aufgusser active in Hokkaido.",
+  "中島あまみ": "Female Aufgusser active in Hokkaido.",
+  "五塔 熱子": "A sorceress of sauna spaces who fills you with strength to survive the day.",
+  "井上勝正": "Transforms the sauna room's atmosphere with soul-stirring 108 heat waves.",
+  "伊倉ゆう": "Female Aufgusser affiliated with the association.",
+  "八狐 -yako-": "Aufgusser.",
+  "北の国のサウナお兄さん": "Aufgusser energizing Hokkaido's sauna scene.",
+  "大森熱狼": "Association member known for powerful Aufguss.",
+  "守護神家入": "Veteran Aufgusser who competed in Neppa Koshien.",
+  "山岳熱風アダチ": "Neppa Koshien competitor known by his mountain-themed alias.",
+  "森脇良太": "Popular Aufgusser affiliated with the association.",
+  "永井テツヤ": "Precise, powerful heat waves released alongside the intensity of music.",
+  "熱ごり": "Popular Aufgusser in Hokkaido.",
+  "熱波僧 真炎": "A uniquely styled Aufgusser known for his Buddhist monk persona.",
+  "熱波師あかべこ": "Association member based in Tohoku region.",
+  "磯村勇斗": "Elegant Aufgusser known by the alias 'Elegance Isomura.'",
+  "箸休めサトシ": "Explosive whirlwind blasts of powerful heat.",
+  "藤原くみちょ": "Aufgusser based in Hokkaido.",
+  "野中咲良": "Young emerging Aufgusser gaining attention at Neppa Koshien.",
+  "鮭山 未菜美": "World-class towel technique. Show Aufguss performances that shine with dramatic flair.",
+};
+
+function getDescEn(name: string, descJa: string): string {
+  return DESC_EN[name] || descJa;
+}
+
 export default function AufgusserPage() {
   const params = useParams();
   const lang = (params.lang as string) || "ja";
@@ -184,7 +249,7 @@ export default function AufgusserPage() {
                 {isEn && getNameEn(p.name) !== p.name && (
                   <p className="text-xs text-white/40 mb-2">{p.name}</p>
                 )}
-                <p className="text-sm text-gray-300 leading-relaxed mb-3">{p.description}</p>
+                <p className="text-sm text-gray-300 leading-relaxed mb-3">{isEn ? getDescEn(p.name, p.description) : p.description}</p>
                 <div className="flex items-center gap-3">
                   <a
                     href={`https://www.instagram.com/explore/tags/${encodeURIComponent(p.name.replace(/[\s　]+/g, ""))}/`}
