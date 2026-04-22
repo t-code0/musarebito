@@ -137,9 +137,6 @@ export default function GlossaryPage({ params }: { params: { lang: string } }) {
                   <h3 className="text-xl font-bold text-white">
                     {item.term_en}
                   </h3>
-                  <span className="text-sm text-green-300/70">
-                    {item.term_ja}
-                  </span>
                 </div>
               ) : (
                 <div className="flex items-baseline gap-3 mb-2">
