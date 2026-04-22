@@ -42,12 +42,12 @@ async function handle(id: string) {
   // --- Phase 1: Places API refresh (only when really needed) ---
   try {
     const cacheExpired = isCacheExpired(sauna.cached_at);
-    const missingPhotos =
+    const fewPhotos =
       sauna.photos === null ||
-      (Array.isArray(sauna.photos) && sauna.photos.length === 0);
+      (Array.isArray(sauna.photos) && sauna.photos.length < 5);
 
     if (
-      (cacheExpired || missingPhotos || (!sauna.phone && !sauna.website)) &&
+      (cacheExpired || fewPhotos || (!sauna.phone && !sauna.website)) &&
       sauna.place_id
     ) {
       const detail = await getPlaceDetail(sauna.place_id, sauna.website);

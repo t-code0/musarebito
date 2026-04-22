@@ -127,7 +127,7 @@ export default function SaunaDetailPage() {
     const needsAi =
       !sauna.ai_summary ||
       !Array.isArray(sauna.photos) ||
-      sauna.photos.length === 0 ||
+      sauna.photos.length < 5 ||
       (lang === "en" && !sauna.ai_summary_en);
     if (!needsAi) return;
     refreshTriggered.current = true;

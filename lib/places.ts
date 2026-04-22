@@ -59,7 +59,7 @@ async function savePlacesToDB(
     const photos = place.photos as { name: string }[] | undefined;
     const photoUrls: string[] = [];
     if (photos?.length) {
-      for (const p of photos.slice(0, 3)) {
+      for (const p of photos.slice(0, 10)) {
         try { photoUrls.push(await photoNameToUrl(p.name)); } catch { /* skip */ }
       }
     }

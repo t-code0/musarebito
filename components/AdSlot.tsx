@@ -1,14 +1,13 @@
 "use client";
 
+import { useParams } from "next/navigation";
+
 /**
  * Reusable AdSense placeholder.
  *
  * After AdSense approval:
  *   1. Set `ADSENSE_CLIENT_ID` and `ADSENSE_SLOT_ID` below.
  *   2. The placeholder is replaced everywhere this component is used.
- *
- * Until then, a subtle "広告枠" placeholder is shown so layout shifts stay
- * minimal once real ads land.
  */
 
 const ADSENSE_CLIENT_ID = ""; // e.g. "ca-pub-1234567890123456"
@@ -24,6 +23,8 @@ interface Props {
 }
 
 export default function AdSlot({ slotName, className = "", style }: Props) {
+  const params = useParams();
+  const isEn = (params?.lang as string) === "en";
   const enabled = ADSENSE_CLIENT_ID !== "" && ADSENSE_SLOT_ID !== "";
 
   if (enabled) {
@@ -52,7 +53,7 @@ export default function AdSlot({ slotName, className = "", style }: Props) {
       className={`my-4 mx-auto w-full max-w-3xl border border-dashed border-white/15 rounded-lg p-6 text-center text-xs text-white/30 ${className}`}
       style={style}
     >
-      広告枠（AdSense審査後に表示されます）
+      {isEn ? "Ad slot (will appear after AdSense approval)" : "広告枠（AdSense審査後に表示されます）"}
     </div>
   );
 }

@@ -52,6 +52,43 @@ const NAME_EN: Record<string, string> = {
   "藤次": "Fujitsugi",
   "スター諸星": "Star Morohoshi",
   "柴田健太郎": "Kentaro Shibata",
+  // Additional performers from DB
+  "kuumaもとし": "Kuuma Motoshi",
+  "Re: バース足立": "Re: Birth Adachi",
+  "アンナ": "Anna",
+  "エターナルあやせ": "Eternal Ayase",
+  "おかみ": "Okami-chi",
+  "かほ": "Kaho",
+  "コウニシパ": "Kounishipa",
+  "さやか": "Sayaka",
+  "スギちゃん": "Sugi-chan",
+  "チョモランマ近藤": "Chomolungma Kondo",
+  "デトロイト阿久津": "Detroit Akutsu",
+  "なべやん": "Nabeyan",
+  "ヌッパシヌッシー": "Nuppashi Nussie",
+  "はるか": "Haruka",
+  "マジシャン熱波師やぎさん": "Magician Neppa-shi Yagi",
+  "まんぷくマサトキ": "Manpuku Masatoki",
+  "みく": "Miku",
+  "みじゅ": "Miju",
+  "ミッキー山下": "Mickey Yamashita",
+  "モノマネっぱー吉田": "Monomane-ppa Yoshida",
+  "らん": "Ran",
+  "りな": "Rina",
+  "中島あまみ": "Amami Nakajima",
+  "伊倉ゆう": "Yu Ikura",
+  "八狐 -yako-": "Yako",
+  "北の国のサウナお兄さん": "Sauna Brother from the North",
+  "大森熱狼": "Netsurou Omori",
+  "守護神家入": "Guardian Ieiri",
+  "山岳熱風アダチ": "Mountain Gale Adachi",
+  "森脇良太": "Ryota Moriwaki",
+  "熱波僧 真炎": "Neppa-so Shin-en",
+  "熱波師あかべこ": "Neppa-shi Akabeko",
+  "磯村勇斗": "Hayato Isomura",
+  "藤原くみちょ": "Kumicho Fujiwara",
+  "野中咲良": "Sakura Nonaka",
+  "鮭山 未菜美": "Sakeyama Minami",
 };
 
 function getNameEn(name: string): string {
@@ -155,7 +192,7 @@ export default function AufgusserPage() {
                     rel="noopener noreferrer"
                     className="text-xs text-red-300 hover:text-white transition-colors"
                   >
-                    #{p.name.replace(/[\s　]+/g, "")} {isEn ? "posts" : "の投稿を見る"}
+                    #{isEn ? getNameEn(p.name).replace(/[\s　]+/g, "") : p.name.replace(/[\s　]+/g, "")} {isEn ? "posts" : "の投稿を見る"}
                   </a>
                   <a
                     href={`https://x.com/search?q=${encodeURIComponent(p.name)}&src=typed_query`}
